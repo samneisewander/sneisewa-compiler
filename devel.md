@@ -4,6 +4,12 @@
 
 ### Encoder
 
+#### Note about hex escape codes
+My decoder treats an input like `"\0xHH"` as valid, treating the `\0` as a regular `0` character per the specification:
+> Any other character following a backslash represents exactly that character.
+
+So the encoder would decode this example as `0xHH`.
+
 #### What AI tools (if any) did you use, and what sort of prompts did you provide?
 I mostly looked at the outputs of the AI overview while I was Googling. I was hoping to find Stack Overflow articles to find strategies for solving these problems, but the AI overview was more convenient. Here were some searches I made:
 - shell repeat char n times
