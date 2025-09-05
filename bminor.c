@@ -37,7 +37,12 @@ int main(int argc, char *argv[]) {
 
 bool string_decode(const char *es, char *s) {
 
-    if (*es != '\"') {
+    if (*es == '\\') {
+        if (*(++es) != '"') {
+            fprintf(stderr, "Encoder: String does not begin with \"\n");
+            return false;
+        }
+    } else if (*(es++) != '"') {
         fprintf(stderr, "Encoder: String does not begin with \"\n");
         return false;
     }
@@ -46,11 +51,7 @@ bool string_decode(const char *es, char *s) {
     char decoded_char;
 
     // march through string until hit closing quotes
-    for (es++; *es != '"'; es++) {
-        if (!*es) {
-            fprintf(stderr, "Encoder: String does not end with \"\n");
-            return false;
-        }
+    for (; *es; es++) {
 
         decoded_char = *es;
 
@@ -141,8 +142,8 @@ bool string_decode(const char *es, char *s) {
 
                     // interpret nibbles as 2 digit hex humber 
                     decoded_char = (high * 16) + low;
-
                     break;
+
                 default:
                     decoded_char = *es;
             }
@@ -153,7 +154,8 @@ bool string_decode(const char *es, char *s) {
         *(s + string_length) = decoded_char;
         string_length++;
 
-        if (string_length > 255) {
+        // Allow an extra character 255 + 1 because the closing double quotes which is stripped after this loop
+        if (string_length > 256) {
             fprintf(stderr, "Encoder: String has length greater than 255\n");
             return false;
         }
@@ -161,13 +163,12 @@ bool string_decode(const char *es, char *s) {
     }
 
     // 3. String must end with "
-    if (*(es + 1) != '\0') {
-        fprintf(stderr, "Encoder: String contains unescaped \"\n");
+    if (*(es - 1) != '"') {
+        fprintf(stderr, "Encoder: String does not end with \"\n");
         return false;
     }
-
     
-    *(s + string_length) = '\0';
+    *(s + string_length - 1) = '\0';
     printf("Encoder: Valid string of length %ld: %s\n", string_length, s);
     
     return true;
