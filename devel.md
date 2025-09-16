@@ -5,14 +5,14 @@
 ### Scanner
 
 > Update your development log to indicate what tools you used, what worked well, and what was challenging.
-- first step, fixing my encoder
-- second step, writing test cases
-	- noticed that incorrect syntax does not mean scan should fail
-	- decided that all token types should probably appear in good test cases
 
-Tools:
-- regex101.com
-- Flex manual
+In terms of tools, I used [regex101.com](https://regex101.com) and the `Flex` manual. I also discussed some behavior and edge casses with my friends.
+
+What worked well was extending my existing code. It was really easy to add more test cases, update the Makefile, handle the new `--scan` flag, and integrate the scanner with the decoder. It was also pretty easy getting the Flex workflow going once I read and understood the syntax.
+
+The tricky part was getting all of the tokens! There were a bunch I didn't think of, like `:` and `;` and `,`. It was also tricky getting the regular expressions right for eating comments and correctly handling the different atomic types. The way strings behave in this year's spec is still really strange to me, and I feel as though its going to cause some very weird behavior downstream.
+
+It was also challenging coming up with thorough test cases for this one. The werid thing is that the syntax doesn't actually have to be correct; any tokens can appear in any order as long as they're all valid. I have a sinking feeling that there is some error the scanner could be catching that I did not think of, and that I did not write test cases for.
 
 ### Encoder
 
@@ -154,61 +154,10 @@ printf "%255s\n" | tr ' ' 'a'
 
 ## Scanner Notes
 
-### Token Types
-
-#### Grouping
-- Left Parenthesis \(
-- Right Parenthesis \)
-- Left Square Bracket \[
-- Right Square Bracket \]
-- Left Curly \{
-- Right Curly \}
-
-#### Operators
-- Plus +
-- Minus -
-- Times *
-- Divide /
-- Exponentiation ^
-- Remainder %
-
-- Postfix Increment ++
-- Postfix Decrement --
-- Unary Array Length #
-- Unary negation -
-
-- Less than <
-- Less than or equal <=
-- equal ==
-- Greater than >
-- Greater than or equal >=
-- Not equal !=
-
-- Logical not !
-- Logical and &&
-- Logical or ||
-
-- Assignment =
-
-#### Keywords
-From the spec: 
-> array auto boolean carray char else false float double for function if integer print return string true void while
-
-#### Identifiers
-From the spec:
-> Identifiers (i.e. variable and function names) may contain letters, numbers, and underscores. Identifiers must begin with a letter or an underscore and may be up to 255 characters long.
-
-This regex should match identifiers:
-```regex
-[a-zA-Z_][a-zA-Z0-9_]{0,254}
-```
-
-#### Atomic types
-- Booleans: Covered in the keywords
-- Integers: `[1-9][0-9]`
-	> All three forms may omit leading zeroes as needed.
-	Not sure if this means that it should reject leading zeroes or just ignore them?
-- 
+Some cool regex:
+- `\/\*(\*[^\/]|[^\*]\/|[^\*\/])*\*\/`: C-style comments
+- `\/\/[^\n]*`: C++ comments
+- `[ !\"\#$\%&'\(\)\*\+,\-\.\/:;<=>?@\[\]\^_`\{|\}~]`: every weird character in Bminor
 
 
 
