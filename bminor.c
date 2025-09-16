@@ -120,9 +120,9 @@ int main(int argc, char *argv[]) {
                 // Print useful error messages
                 if (t == TOKEN_ERROR) {
                     if (*yytext == '"') {
-                        fprintf(stderr, "scan error: strings must be enclosed in double quotes.\n", yytext);
+                        fprintf(stderr, "scan error: strings must be enclosed in double quotes.\n");
                     } else if (strlen(yytext) >= 255) {
-                        fprintf(stderr, "scan error: identifiers cannot be longer than 255 characters.\n", yytext);
+                        fprintf(stderr, "scan error: identifiers cannot be longer than 255 characters.\n");
                     } else {
                         fprintf(stderr, "scan error: %s is not a valid character\n", yytext);
                     }
@@ -149,6 +149,7 @@ int main(int argc, char *argv[]) {
                         printf(" %s", decoded);
                         break;
                     default:
+                        break;
                 }
                 printf("\n");
             }   
