@@ -1,0 +1,3 @@
+// unary array length
+
+l: integer = # a;

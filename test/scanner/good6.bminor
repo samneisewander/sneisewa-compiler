@@ -1,0 +1,3 @@
+// leading zeroes and binary/hex literals
+
+1234ABCDEFH 100101100101B 0000000000000009

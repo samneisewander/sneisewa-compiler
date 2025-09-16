@@ -74,6 +74,7 @@ const char *token_t_map[] = {
 
     "TOKEN_SEMICOLON",
     "TOKEN_COMMA",
+    "TOKEN_COLON",
 
     "TOKEN_ERROR"
 };
@@ -116,11 +117,19 @@ int main(int argc, char *argv[]) {
 
             for (token_t t = yylex(); t != TOKEN_EOF; t = yylex()) {
 
+                // Print useful error messages
                 if (t == TOKEN_ERROR) {
-                    fprintf(stderr, "scan error: %s is not a valid character\n", yytext);
+                    if (*yytext == '"') {
+                        fprintf(stderr, "scan error: strings must be enclosed in double quotes.\n", yytext);
+                    } else if (strlen(yytext) >= 255) {
+                        fprintf(stderr, "scan error: identifiers cannot be longer than 255 characters.\n", yytext);
+                    } else {
+                        fprintf(stderr, "scan error: %s is not a valid character\n", yytext);
+                    }
                     return EXIT_FAILURE;
                 }
 
+                // Print the token type and the decoded literal if applicable.
                 printf("%s", token_t_map[t]);
                 switch (t) {
                     case TOKEN_IDENTIFIER:
@@ -133,7 +142,7 @@ int main(int argc, char *argv[]) {
                         encoded[2] = '\"';
                         encoded[3] = '\0';
                         string_decode(encoded, decoded);
-                        printf(" '%s'", decoded);
+                        printf(" %s", decoded);
                         break;
                     case TOKEN_STRING_LITERAL:
                         string_decode(yytext, decoded);

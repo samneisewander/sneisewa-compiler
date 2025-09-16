@@ -9,7 +9,7 @@ NONZERO_HEX			[1-9a-fA-F]
 LETTER 				[a-zA-Z]
 ALPHANUM 			[a-zA-Z0-9]
 
-IDENTIFIER 			({LETTER}|_)(ALPHANUM|_){0,254}
+IDENTIFIER 			({LETTER}|_)({ALPHANUM}|_){0,254}
 
 ESCAPE_SEQUENCE   	\\[abefrntv\\\'\"]
 SYMBOL				[ !\"\#$\%&'\(\)\*\+,\-\.\/:;<=>?@\[\]\^_`\{|\}~]
@@ -20,10 +20,17 @@ INTEGER_LITERAL 	{NONZERO_DIGIT}{DIGIT}*
 HEX_LITERAL 		{NONZERO_HEX}{HEX}*H
 BINARY_LITERAL 		1[01]*B
 
+COMMENT_C_STYLE		\/\*(\*[^\/]|[^\*]\/|[^\*\/])*\*\/
+COMMENT_CPP_STYLE	\/\/[^\n]*
+
+COMMENT				{COMMENT_C_STYLE}|{COMMENT_CPP_STYLE}
+
 %%
 
 (" "|\t|\n)         			/* skip whitespace */
 0        						/* skip leading zeroes */
+{COMMENT}						/* skip comments */
+
 \(  							{ return TOKEN_LPAREN; }   
 \)    							{ return TOKEN_RPAREN; }   
 \[    							{ return TOKEN_LBRACKET; }   
@@ -34,7 +41,7 @@ BINARY_LITERAL 		1[01]*B
 \+    							{ return TOKEN_ADD; }      
 \-   							{ return TOKEN_SUBTRACT; }      
 \*    							{ return TOKEN_MULTIPLY; }     
-\\    							{ return TOKEN_DIVIDE; }      
+\/    							{ return TOKEN_DIVIDE; }      
 \^    							{ return TOKEN_EXPONENT; }      
 \%    							{ return TOKEN_REMAINDER; }      
 
@@ -75,15 +82,17 @@ true    						{ return TOKEN_KEY_TRUE; }
 void    						{ return TOKEN_KEY_VOID; }
 while    						{ return TOKEN_KEY_WHILE; }
 
-{IDENTIFIER} 					{ return TOKEN_IDENTIFIER; }
+({LETTER}|_)({ALPHANUM}|_){0,254} 						{ return TOKEN_IDENTIFIER; }
+({LETTER}|_)({ALPHANUM}|_){255,} 						{ return TOKEN_ERROR; }
 
-{NONZERO_DIGIT}{DIGIT}*	  								{ return TOKEN_INTEGER_LITERAL; }
+{INTEGER_LITERAL}|{HEX_LITERAL}|{BINARY_LITERAL}	  	{ return TOKEN_INTEGER_LITERAL; }
 {NONZERO_DIGIT}{DIGIT}*\.{DIGIT}*{NONZERO_DIGIT}    	{ return TOKEN_DOUBLE_LITERAL; }
 '{CHARACTER}'    										{ return TOKEN_CHARACTER_LITERAL; }
 \"{CHARACTER}*\"    									{ return TOKEN_STRING_LITERAL; }
 
 ;								{ return TOKEN_SEMICOLON; }
 ,								{ return TOKEN_COMMA; }
+:								{ return TOKEN_COLON; }
 
 .								{ return TOKEN_ERROR; }
 

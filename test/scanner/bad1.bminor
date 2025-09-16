@@ -1,1 +1,3 @@
-while( i< ) { print "\'count\'", i; }
+// no closing double quotes!!
+
+while( i< ) { print "\'count\', i; }
