@@ -4,18 +4,94 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "tokens.h"
+
+extern FILE *yyin;
+extern int yylex();
+extern char *yytext;
+
+const char *token_t_map[] = {
+    "TOKEN_EOF",
+
+    "TOKEN_LPAREN",   
+    "TOKEN_RPAREN",   
+    "TOKEN_LBRACKET",   
+    "TOKEN_RBRACKET",   
+    "TOKEN_LCURLY",   
+    "TOKEN_RCURLY",   
+
+    "TOKEN_ADD",      
+    "TOKEN_SUBTRACT",      
+    "TOKEN_MULTIPLY",     
+    "TOKEN_DIVIDE",      
+    "TOKEN_EXPONENT",      
+    "TOKEN_REMAINDER",      
+
+    "TOKEN_POSTFIX_INCREMENT",       
+    "TOKEN_POSTFIX_DECREMENT",       
+
+    "TOKEN_UNARY_ARRAY_LENGTH",   
+    "TOKEN_UNARY_NEGATE",   
+
+    "TOKEN_LESS_THAN",       
+    "TOKEN_LESS_THAN_OR_EQUAL",      
+    "TOKEN_EQUAL",       
+    "TOKEN_GREATER_THAN",       
+    "TOKEN_GREATER_THAN_OR_EQUAL",       
+    "TOKEN_NOT_EQUAL",       
+
+    "TOKEN_LOGICAL_NOT",      
+    "TOKEN_LOGICAL_AND",      
+    "TOKEN_LOGICAL_OR",       
+
+    "TOKEN_ASSIGNMENT",
+
+    "TOKEN_KEY_ARRAY",
+    "TOKEN_KEY_AUTO",
+    "TOKEN_KEY_BOOLEAN",
+    "TOKEN_KEY_CHAR",
+    "TOKEN_KEY_ELSE",
+    "TOKEN_KEY_FALSE",
+    "TOKEN_KEY_FLOAT",
+    "TOKEN_KEY_DOUBLE",
+    "TOKEN_KEY_FOR",
+    "TOKEN_KEY_FUNCTION",
+    "TOKEN_KEY_IF",
+    "TOKEN_KEY_INTEGER",
+    "TOKEN_KEY_PRINT",
+    "TOKEN_KEY_RETURN",
+    "TOKEN_KEY_STRING",
+    "TOKEN_KEY_TRUE",
+    "TOKEN_KEY_VOID",
+    "TOKEN_KEY_WHILE",
+
+    "TOKEN_IDENTIFIER",
+
+    "TOKEN_INTEGER_LITERAL",
+    "TOKEN_DOUBLE_LITERAL",
+    "TOKEN_CHARACTER_LITERAL",
+    "TOKEN_STRING_LITERAL",
+
+    "TOKEN_SEMICOLON",
+    "TOKEN_COMMA",
+
+    "TOKEN_ERROR"
+};
+
 bool string_decode(const char *es, char *s);
 void string_encode(const char *s, char *es);
 
 int main(int argc, char *argv[]) {
+
+    char encoded[BUFSIZ];
+    char decoded[BUFSIZ];
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--encode") == 0) {
             
             // open passed file, allocate buffers for string encoding/decoding
             FILE *fp = fopen(argv[i + 1], "r");
-            char encoded[BUFSIZ];
-            char decoded[BUFSIZ];
+            
             
             // read in the string, flose file pointer
             fgets(encoded, BUFSIZ, fp);
@@ -31,6 +107,42 @@ int main(int argc, char *argv[]) {
             else {
                 return EXIT_FAILURE;
             }
+        } else if (strcmp(argv[i], "--scan") == 0) {
+            yyin = fopen(argv[++i], "r");
+            if (!yyin) {
+                fprintf(stderr, "Could not open file %s\n", argv[i]);
+                return EXIT_FAILURE;
+            }
+
+            for (token_t t = yylex(); t != TOKEN_EOF; t = yylex()) {
+
+                if (t == TOKEN_ERROR) {
+                    fprintf(stderr, "scan error: %s is not a valid character\n", yytext);
+                    return EXIT_FAILURE;
+                }
+
+                printf("%s", token_t_map[t]);
+                switch (t) {
+                    case TOKEN_IDENTIFIER:
+                    case TOKEN_INTEGER_LITERAL:
+                        printf(" %s", yytext);
+                        break;
+                    case TOKEN_CHARACTER_LITERAL:
+                        encoded[0] = '\"';
+                        encoded[1] = yytext[1];
+                        encoded[2] = '\"';
+                        encoded[3] = '\0';
+                        string_decode(encoded, decoded);
+                        printf(" '%s'", decoded);
+                        break;
+                    case TOKEN_STRING_LITERAL:
+                        string_decode(yytext, decoded);
+                        printf(" %s", decoded);
+                        break;
+                    default:
+                }
+                printf("\n");
+            }   
         }
     }
 }
@@ -44,6 +156,11 @@ bool string_decode(const char *es, char *s) {
         }
     } else if (*(es++) != '"') {
         fprintf(stderr, "Encoder: String does not begin with \"\n");
+        return false;
+    }
+
+    if (!*es) {
+        fprintf(stderr, "Encoder: String does not end with \"\n");
         return false;
     }
 
@@ -169,7 +286,6 @@ bool string_decode(const char *es, char *s) {
     }
     
     *(s + string_length - 1) = '\0';
-    printf("Encoder: Valid string of length %ld: %s\n", string_length, s);
     
     return true;
 }

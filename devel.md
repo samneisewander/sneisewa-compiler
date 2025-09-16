@@ -2,6 +2,18 @@
 
 ## Assignment Questions
 
+### Scanner
+
+> Update your development log to indicate what tools you used, what worked well, and what was challenging.
+- first step, fixing my encoder
+- second step, writing test cases
+	- noticed that incorrect syntax does not mean scan should fail
+	- decided that all token types should probably appear in good test cases
+
+Tools:
+- regex101.com
+- Flex manual
+
 ### Encoder
 
 #### Note about hex escape codes
@@ -139,6 +151,66 @@ I learned that you can print a single character to stdout `n` times like this:
 ```sh
 printf "%255s\n" | tr ' ' 'a'
 ```
+
+## Scanner Notes
+
+### Token Types
+
+#### Grouping
+- Left Parenthesis \(
+- Right Parenthesis \)
+- Left Square Bracket \[
+- Right Square Bracket \]
+- Left Curly \{
+- Right Curly \}
+
+#### Operators
+- Plus +
+- Minus -
+- Times *
+- Divide /
+- Exponentiation ^
+- Remainder %
+
+- Postfix Increment ++
+- Postfix Decrement --
+- Unary Array Length #
+- Unary negation -
+
+- Less than <
+- Less than or equal <=
+- equal ==
+- Greater than >
+- Greater than or equal >=
+- Not equal !=
+
+- Logical not !
+- Logical and &&
+- Logical or ||
+
+- Assignment =
+
+#### Keywords
+From the spec: 
+> array auto boolean carray char else false float double for function if integer print return string true void while
+
+#### Identifiers
+From the spec:
+> Identifiers (i.e. variable and function names) may contain letters, numbers, and underscores. Identifiers must begin with a letter or an underscore and may be up to 255 characters long.
+
+This regex should match identifiers:
+```regex
+[a-zA-Z_][a-zA-Z0-9_]{0,254}
+```
+
+#### Atomic types
+- Booleans: Covered in the keywords
+- Integers: `[1-9][0-9]`
+	> All three forms may omit leading zeroes as needed.
+	Not sure if this means that it should reject leading zeroes or just ignore them?
+- 
+
+
 
 
 

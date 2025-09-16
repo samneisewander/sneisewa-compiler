@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 for testfile in test/encode/good*.bminor
 do
