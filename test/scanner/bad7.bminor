@@ -1,1 +1,4 @@
-this is an invalid token .
+// Malformed doubles
+123.
+123.e+
+123.E-

@@ -68,7 +68,11 @@ const char *token_t_map[] = {
     "TOKEN_IDENTIFIER",
 
     "TOKEN_INTEGER_LITERAL",
-    "TOKEN_DOUBLE_LITERAL",
+    "TOKEN_HEX_LITERAL",
+    "TOKEN_BINARY_LITERAL",
+    "TOKEN_DOUBLE",
+    "TOKEN_DOUBLE_SCIENTIFIC",
+
     "TOKEN_CHARACTER_LITERAL",
     "TOKEN_STRING_LITERAL",
 
@@ -139,6 +143,10 @@ int main(int argc, char *argv[]) {
                 switch (t) {
                     case TOKEN_IDENTIFIER:
                     case TOKEN_INTEGER_LITERAL:
+                    case TOKEN_HEX_LITERAL:
+                    case TOKEN_BINARY_LITERAL:
+                    case TOKEN_DOUBLE:
+                    case TOKEN_DOUBLE_SCIENTIFIC:
                         printf(" %s", yytext);
                         break;
                     case TOKEN_CHARACTER_LITERAL:
