@@ -115,6 +115,8 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
             }
 
+            int status = EXIT_SUCCESS;
+
             for (token_t t = yylex(); t != TOKEN_EOF; t = yylex()) {
 
                 // Print useful error messages
@@ -126,10 +128,13 @@ int main(int argc, char *argv[]) {
                     } else {
                         fprintf(stderr, "scan error: %s is not a valid character\n", yytext);
                     }
-                    return EXIT_FAILURE;
+                    status = EXIT_FAILURE;
+                    continue;
                 }
 
                 // Print the token type and the decoded literal if applicable.
+                size_t char_literal_len;
+
                 printf("%s", token_t_map[t]);
                 switch (t) {
                     case TOKEN_IDENTIFIER:
@@ -137,37 +142,44 @@ int main(int argc, char *argv[]) {
                         printf(" %s", yytext);
                         break;
                     case TOKEN_CHARACTER_LITERAL:
-                        encoded[0] = '\"';
-                        encoded[1] = yytext[1];
-                        encoded[2] = '\"';
-                        encoded[3] = '\0';
-                        string_decode(encoded, decoded);
+                        char_literal_len = strlen(yytext);
+                        *yytext = '"';
+                        *(yytext + char_literal_len - 1) = '"';
+                        *(yytext + char_literal_len) = '\0';
+                        if (!string_decode(yytext, decoded)) {
+                            exit(EXIT_FAILURE);
+                        }
                         printf(" %s", decoded);
                         break;
                     case TOKEN_STRING_LITERAL:
-                        string_decode(yytext, decoded);
+                        if (!string_decode(yytext, decoded)) {
+                            exit(EXIT_FAILURE);
+                        }
                         printf(" %s", decoded);
                         break;
                     default:
                         break;
                 }
                 printf("\n");
-            }   
+            }
+            
+            return status;
         }
     }
 }
 
 bool string_decode(const char *es, char *s) {
 
-    if (*es == '\\') {
-        if (*(++es) != '"') {
+    if (es[0] == '\\') {
+        if (es[1] != '"') {
             fprintf(stderr, "Encoder: String does not begin with \"\n");
             return false;
         }
-    } else if (*(es++) != '"') {
+    } else if (es[0] != '"') {
         fprintf(stderr, "Encoder: String does not begin with \"\n");
         return false;
     }
+    es++;
 
     if (!*es) {
         fprintf(stderr, "Encoder: String does not end with \"\n");
