@@ -163,3 +163,11 @@ Some cool regex:
 
 
 
+
+## Parser Notes
+
+TODO:
+- Update scanner so that encoding takes place in the scanner.
+- Update encoder to reject strings with internal quotes
+- Update tokens to match string literals according to new standards.
+
