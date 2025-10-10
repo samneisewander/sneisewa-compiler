@@ -1,0 +1,19 @@
+// Declarations
+
+x: integer = 65;
+y: char = 'A';
+d: double = x;
+
+b: array [2] boolean = {true,false};
+
+b: array [2] boolean;
+
+b: array [2 + 4] boolean;
+
+b: auto [2 + 4] auto [10] boolean;
+
+b: integer = myfunct();
+
+b: integer = myfunct(2, 5 + 5);
+
+b: integer = myfunct(2, 5 + 5, myfunct(2, 3));

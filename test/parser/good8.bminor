@@ -1,0 +1,6 @@
+// unary array lenght
+
+main: function void () {
+    x: array [5] integer = {1,2,3,4,5};
+    y: integer = #x;
+}

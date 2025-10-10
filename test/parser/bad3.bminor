@@ -1,0 +1,9 @@
+// For Loops
+
+main: function void () {
+
+    for (i = 0; i < 3; i++; hello) {
+        print i;
+    }
+
+}

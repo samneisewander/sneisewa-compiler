@@ -1,0 +1,17 @@
+// Functions
+
+f: function auto ( x: integer, y: integer ) {
+	return x + y;
+}
+
+g: function auto ( x: auto, y: auto ) {
+	return x + y;
+}
+
+h: function integer ( x: auto, y: auto ) {
+	return;
+}
+
+i: function integer ( x: array [5] integer, y: array [5] array [5] integer ) {
+	return;
+}

@@ -1,0 +1,11 @@
+// If statements
+
+main:function void () {
+
+    if (x: integer = 5;) {
+        print "hello world";
+    } else if (integer) {
+        print i;
+    }
+
+}

@@ -1,0 +1,3 @@
+// Declarations
+
+x: array = {true,false};

@@ -1,0 +1,26 @@
+// For Loops
+
+main: function void () {
+
+    for (i; i < 3; i++) {
+        print i;
+    }
+
+    for (i; i < 3; i++)
+        print i;
+
+    for (i = start; i < end; i = i + 2) {
+        if (i % 2 == 0) {
+            return false;
+        }
+    }
+
+    for (i = 100; i < end; i++) {
+        for (j = 0; j < strlen; j++) {
+            for (k = 0; k < 10000; j++) {
+                print i, j, k;
+            }
+        }
+    }
+
+}

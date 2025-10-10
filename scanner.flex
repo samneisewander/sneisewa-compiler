@@ -1,6 +1,9 @@
 %{
 	#include <stdbool.h>
-	#include "tokens.h"
+    #include <stdlib.h>
+    #include <stdio.h>
+
+	#include "token.h"
 
 	#define MAX_STR_LEN 255
 
@@ -8,23 +11,19 @@
 %}
 
 DIGIT 				[0-9]
-NONZERO_DIGIT 		[1-9]
-	
+
 HEX					[0-9a-fA-F]
-NONZERO_HEX			[1-9a-fA-F]
 LETTER 				[a-zA-Z]
 ALPHANUM 			[a-zA-Z0-9]
 
-IDENTIFIER 			({LETTER}|_)({ALPHANUM}|_){0,254}
-
-ESCAPE_SEQUENCE   	\\[abefrntv\\\'\"]
+ESCAPE_SEQUENCE   	\\([abefrntv\\\'\"]|0x{HEX}{HEX})
 SYMBOL				[ !\#$\%&'\(\)\*\+,\-\.\/:;<=>?@\[\]\^_`\{|\}~]
 
 CHARACTER			({ALPHANUM}|{ESCAPE_SEQUENCE}|{SYMBOL})
 
-INTEGER_LITERAL 	{NONZERO_DIGIT}{DIGIT}*
-HEX_LITERAL 		{NONZERO_HEX}{HEX}*H
-BINARY_LITERAL 		1[01]*B
+INTEGER_LITERAL 	{DIGIT}*
+HEX_LITERAL 		0x{HEX}*
+BINARY_LITERAL 		0b[01]*
 
 DOUBLE				{INTEGER_LITERAL}\.{DIGIT}+
 DOUBLE_SCIENTIFIC	{INTEGER_LITERAL}\.?{DIGIT}*(e|E)[+-]?{DIGIT}+
@@ -34,10 +33,11 @@ COMMENT_CPP_STYLE	\/\/[^\n]*
 
 COMMENT				{COMMENT_C_STYLE}|{COMMENT_CPP_STYLE}
 
+%option yylineno
+
 %%
 
 (" "|\t|\n)         				/* skip whitespace */
-0        							/* skip leading zeroes */
 {COMMENT}							/* skip comments */
 
 \(  								{ return TOKEN_LPAREN; }   
@@ -75,6 +75,7 @@ COMMENT				{COMMENT_C_STYLE}|{COMMENT_CPP_STYLE}
 array    							{ return TOKEN_KEY_ARRAY; }
 auto    							{ return TOKEN_KEY_AUTO; }
 boolean    							{ return TOKEN_KEY_BOOLEAN; }
+carray                              { return TOKEN_KEY_CARRAY; }
 char    							{ return TOKEN_KEY_CHAR; }
 else    							{ return TOKEN_KEY_ELSE; }
 false    							{ return TOKEN_KEY_FALSE; }
@@ -92,7 +93,6 @@ void    							{ return TOKEN_KEY_VOID; }
 while    							{ return TOKEN_KEY_WHILE; }
 
 ({LETTER}|_)({ALPHANUM}|_){0,254} 	{ return TOKEN_IDENTIFIER; }
-({LETTER}|_)({ALPHANUM}|_){255,} 	{ return TOKEN_ERROR; }
 
 {INTEGER_LITERAL}	  				{ return TOKEN_INTEGER_LITERAL; }
 {HEX_LITERAL}  						{ return TOKEN_HEX_LITERAL; }
@@ -110,7 +110,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 	
 	if (!string_decode(yytext, buf)) {
 		fprintf(stderr, "encoder: Invalid character literal.\n");
-		return TOKEN_ERROR;
+		return YYerror;
 	}
 
 	int i;
@@ -128,7 +128,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 	char buf[MAX_STR_LEN + 1];
 	if (!string_decode(yytext, buf)) {
 		fprintf(stderr, "encoder: Invalid string literal.\n");
-		return TOKEN_ERROR;
+		return YYerror;
 	}
 
 	int i;
@@ -146,7 +146,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 ,									{ return TOKEN_COMMA; }
 :									{ return TOKEN_COLON; }
 
-.									{ return TOKEN_ERROR; }
+.									{ return YYerror; }
 
 %%
 
@@ -227,7 +227,7 @@ bool string_decode(const char *es, char *s) {
                     //check if this is an escaped '0' or a hex sequence
                     if (*(++es) != 'x') {
                         decoded_char = '0';
-                        es -= 1;
+                        es--;
                         break;
                     }
 

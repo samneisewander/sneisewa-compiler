@@ -159,15 +159,17 @@ Some cool regex:
 - `\/\/[^\n]*`: C++ comments
 - `[ !\"\#$\%&'\(\)\*\+,\-\.\/:;<=>?@\[\]\^_`\{|\}~]`: every weird character in Bminor
 
-
-
-
-
-
 ## Parser Notes
 
-TODO:
-- Update scanner so that encoding takes place in the scanner.
-- Update encoder to reject strings with internal quotes
-- Update tokens to match string literals according to new standards.
+Wow. This was incredibly hard.
 
+> What AI tools (if any) did you use, and what sort of prompts did you provide?
+I did not use any AI tools, but I did heavily reference the documentation for Bison. I also learned some neat tricks from the docs and from my friends, such as being able to print line numbers on parse failures or get more verbose error messages. 
+
+> What parts of the code were easy to get right?
+The order of operations stuff was not too bad, and getting Bison to play nicely with Flex and `bminor.c` wasn't that hard.  
+
+> What parts were difficult to get right and required more effort?
+Dangling else was a huge nightmare, and then getting the for loops to work on top of that was even worse. Then, being able to initialize arbitarily high-dimensional arrays was very hard also. At the moment, my head hurts to much to really think of other things that were challenging, but the assignment was extremly confusing and brutal from start to finish.  
+
+It was also really hard to diagnose shift/reduce and reduce/reduce conflicts, even with Bison's help with counterexamples. Most of the time I had to resort to tracing through the parse on paper to reason about what when wrong and what I needed to change.

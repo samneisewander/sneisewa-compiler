@@ -1,0 +1,18 @@
+// statements
+
+main: function void() {
+    print i;
+
+    print i, j, k, true, 5;
+
+    print;
+
+    return 5;
+
+    return;
+
+    y = m*x + b;
+
+    i = j = k = 0;
+
+}

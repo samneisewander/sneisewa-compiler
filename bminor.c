@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tokens.h"
+#include "token.h"
 
 extern FILE *yyin;
 extern int yylex();
 extern char *yytext;
 
 const char *token_t_map[] = {
-    "TOKEN_EOF",
+    "YYerror",
+    "YYUNDEF",
 
     "TOKEN_LPAREN",
     "TOKEN_RPAREN",
@@ -30,7 +31,6 @@ const char *token_t_map[] = {
     "TOKEN_POSTFIX_DECREMENT",
 
     "TOKEN_UNARY_ARRAY_LENGTH",
-    "TOKEN_UNARY_NEGATE",
 
     "TOKEN_LESS_THAN",
     "TOKEN_LESS_THAN_OR_EQUAL",
@@ -48,6 +48,7 @@ const char *token_t_map[] = {
     "TOKEN_KEY_ARRAY",
     "TOKEN_KEY_AUTO",
     "TOKEN_KEY_BOOLEAN",
+    "TOKEN_KEY_CARRAY",
     "TOKEN_KEY_CHAR",
     "TOKEN_KEY_ELSE",
     "TOKEN_KEY_FALSE",
@@ -79,7 +80,7 @@ const char *token_t_map[] = {
     "TOKEN_COMMA",
     "TOKEN_COLON",
 
-    "TOKEN_ERROR"};
+};
 
 bool string_decode(const char *es, char *s);
 void string_encode(const char *s, char *es);
@@ -115,8 +116,8 @@ int main(int argc, char *argv[]) {
 
             int status = EXIT_SUCCESS;
 
-            for (token_t t = yylex(); t != TOKEN_EOF; t = yylex()) {
-                if (t == TOKEN_ERROR) {
+            for (yytoken_kind_t t = yylex(); t != YYEOF; t = yylex()) {
+                if (t == YYerror) {
                     status = EXIT_FAILURE;
                     continue;
                 }
@@ -131,15 +132,33 @@ int main(int argc, char *argv[]) {
                     case TOKEN_DOUBLE_SCIENTIFIC:
                     case TOKEN_CHARACTER_LITERAL:
                     case TOKEN_STRING_LITERAL:
-                        printf("%s %s\n", token_t_map[t], yytext);
+                        printf("%s %s\n", token_t_map[t - YYerror], yytext);
+                        break;
+                    case YYEOF:
+                        printf("%s\n", "YYEOF");
                         break;
                     default:
-                        printf("%s\n", token_t_map[t]);
+                        if (t >= YYerror && t <= TOKEN_COLON) {
+                            printf("%s\n", token_t_map[t - YYerror]);
+                        }
                         break;
                 }
             }
 
             return status;
+        } else if (strcmp(argv[i], "--parse") == 0) {
+            yyin = fopen(argv[++i], "r");
+            if (!yyin) {
+                fprintf(stderr, "Could not open file %s\n", argv[i]);
+                return EXIT_FAILURE;
+            }
+
+            if (yyparse() == 0) {
+                printf("parse successful\n");
+                return EXIT_SUCCESS;
+            } else {
+                return EXIT_FAILURE;
+            }
         }
     }
 }
@@ -147,9 +166,6 @@ int main(int argc, char *argv[]) {
 void string_encode(const char *s, char *es) {
     *(es++) = '"';
 
-    // the first statement of a for loop is an initializer. if you dont need to initialize the
-    // control variable, you can just leave that blank.
-    // replace this with a hashtable to make it faster
     for (; *s; s++) {
         switch (*s) {
             case '\a':

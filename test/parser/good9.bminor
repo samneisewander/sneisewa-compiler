@@ -1,0 +1,5 @@
+// nasty if/else
+
+main: function auto() {
+    if (true) for (;;) if (true) if (true) print i; else return k; else return j;
+}
