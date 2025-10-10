@@ -110,7 +110,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 	
 	if (!string_decode(yytext, buf)) {
 		fprintf(stderr, "encoder: Invalid character literal.\n");
-		return YYerror;
+		return TOKEN_ERROR;
 	}
 
 	int i;
@@ -128,7 +128,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 	char buf[MAX_STR_LEN + 1];
 	if (!string_decode(yytext, buf)) {
 		fprintf(stderr, "encoder: Invalid string literal.\n");
-		return YYerror;
+		return TOKEN_ERROR;
 	}
 
 	int i;
@@ -146,7 +146,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 ,									{ return TOKEN_COMMA; }
 :									{ return TOKEN_COLON; }
 
-.									{ return YYerror; }
+.									{ return TOKEN_ERROR; }
 
 %%
 

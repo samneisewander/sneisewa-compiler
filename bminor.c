@@ -8,11 +8,9 @@
 extern FILE *yyin;
 extern int yylex();
 extern char *yytext;
+extern void yyerror (char const *s);
 
 const char *token_t_map[] = {
-    "YYerror",
-    "YYUNDEF",
-
     "TOKEN_LPAREN",
     "TOKEN_RPAREN",
     "TOKEN_LBRACKET",
@@ -79,7 +77,7 @@ const char *token_t_map[] = {
     "TOKEN_SEMICOLON",
     "TOKEN_COMMA",
     "TOKEN_COLON",
-
+    "TOKEN_ERROR"
 };
 
 bool string_decode(const char *es, char *s);
@@ -116,8 +114,8 @@ int main(int argc, char *argv[]) {
 
             int status = EXIT_SUCCESS;
 
-            for (yytoken_kind_t t = yylex(); t != YYEOF; t = yylex()) {
-                if (t == YYerror) {
+            for (enum yytokentype t = yylex(); t != 0; t = yylex()) {
+                if (t == TOKEN_ERROR) {
                     status = EXIT_FAILURE;
                     continue;
                 }
@@ -132,14 +130,14 @@ int main(int argc, char *argv[]) {
                     case TOKEN_DOUBLE_SCIENTIFIC:
                     case TOKEN_CHARACTER_LITERAL:
                     case TOKEN_STRING_LITERAL:
-                        printf("%s %s\n", token_t_map[t - YYerror], yytext);
+                        printf("%s %s\n", token_t_map[t - TOKEN_LPAREN], yytext);
                         break;
-                    case YYEOF:
+                    case 0:
                         printf("%s\n", "YYEOF");
                         break;
                     default:
-                        if (t >= YYerror && t <= TOKEN_COLON) {
-                            printf("%s\n", token_t_map[t - YYerror]);
+                        if (t >= TOKEN_LPAREN && t <= TOKEN_COLON) {
+                            printf("%s\n", token_t_map[t - TOKEN_LPAREN]);
                         }
                         break;
                 }
