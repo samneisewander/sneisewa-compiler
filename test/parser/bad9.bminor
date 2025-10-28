@@ -1,4 +1,4 @@
-main: function void() {
+main: function void() = {
     add: function integer(a: integer, b: integer) {
         return a + b;
     }

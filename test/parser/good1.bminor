@@ -1,6 +1,6 @@
 // For Loops
 
-main: function void () {
+main: function void () = {
 
     for (i; i < 3; i++) {
         print i;

@@ -245,7 +245,7 @@ func.def        : %empty
                 ;
 
 func.def_or_semi: TOKEN_SEMICOLON
-                | TOKEN_LCURLY func.def TOKEN_RCURLY
+                | TOKEN_ASSIGNMENT TOKEN_LCURLY func.def TOKEN_RCURLY
                 ;
 
 func.params.list: func.params func.params.list.opt

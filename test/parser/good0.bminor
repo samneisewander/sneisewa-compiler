@@ -1,6 +1,6 @@
 // If statements
 
-main:function void () {
+main:function void () = {
 
     if (12 * 8 + 3) {
         print "hello world";

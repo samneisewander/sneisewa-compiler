@@ -1,6 +1,6 @@
 // If statements
 
-main:function void () {
+main:function void () = {
 
     if (true) {
         print "hello world";

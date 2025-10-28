@@ -1,21 +1,21 @@
 // test function calls
 
-func1: function integer (x: integer, y: char) {
+func1: function integer (x: integer, y: char) = {
 	print x;
 	return 1;
 }
 
-func2: function integer (y:char) {
+func2: function integer (y:char) = {
 	print x;
 	return 2;
 }
 
-func3: function integer (x:integer, y:char, z:string) {
+func3: function integer (x:integer, y:char, z:string) = {
 	print z;
 	return 4;
 }
 
-main: function void () {
+main: function void () = {
 	x:integer = 4;
 	y:char = 'c';
 	z:string = "hello";

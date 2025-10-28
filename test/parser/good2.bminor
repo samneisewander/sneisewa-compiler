@@ -1,6 +1,6 @@
 // statements
 
-main: function void() {
+main: function void() = {
     print i;
 
     print i, j, k, true, 5;
