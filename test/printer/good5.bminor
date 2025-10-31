@@ -1,0 +1,15 @@
+// High dimesional arrays
+
+x: array [5] array [3] integer = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
+
+x: array[5] array[10] boolean;
+
+y: string = "hello world";
+
+main: function integer () = {
+	x[3][2] = 5;
+	x = arr[2][3];
+	x++;
+	return z;
+	c: char = str[0];
+} 

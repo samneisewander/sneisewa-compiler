@@ -2,6 +2,20 @@
 
 ## Assignment Questions
 
+### Printer
+
+> What AI tools (if any) did you use, and what sort of prompts did you provide?
+
+I didn't use AI tools.
+
+> What parts of the code were easy to get right?
+
+It was all hard.
+
+> What parts were difficult to get right and required more effort?
+
+All of it. I spent probably 15 hours on this homework total, and couldn't complete everything. I don't understand why it isn't working. I don't even know how to approach working out the parentheses or fixing the spacing.
+
 ### Scanner
 
 > Update your development log to indicate what tools you used, what worked well, and what was challenging.

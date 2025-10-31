@@ -3,14 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "decl.h"
+#include "encoder.h"
 #include "token.h"
 
-extern FILE *yyin;
+extern FILE* yyin;
 extern int yylex();
-extern char *yytext;
-extern void yyerror (char const *s);
+extern char* yytext;
+extern void yyerror(char const* s);
+extern struct decl* program_ast;
 
-const char *token_t_map[] = {
+const char* token_t_map[] = {
     "TOKEN_LPAREN",
     "TOKEN_RPAREN",
     "TOKEN_LBRACKET",
@@ -77,20 +80,16 @@ const char *token_t_map[] = {
     "TOKEN_SEMICOLON",
     "TOKEN_COMMA",
     "TOKEN_COLON",
-    "TOKEN_ERROR"
-};
+    "TOKEN_ERROR"};
 
-bool string_decode(const char *es, char *s);
-void string_encode(const char *s, char *es);
-
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     char encoded[BUFSIZ];
     char decoded[BUFSIZ];
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--encode") == 0) {
             // open passed file, allocate buffers for string encoding/decoding
-            FILE *fp = fopen(argv[i + 1], "r");
+            FILE* fp = fopen(argv[i + 1], "r");
 
             // read in the string, flose file pointer
             fgets(encoded, BUFSIZ, fp);
@@ -144,6 +143,7 @@ int main(int argc, char *argv[]) {
             }
 
             return status;
+
         } else if (strcmp(argv[i], "--parse") == 0) {
             yyin = fopen(argv[++i], "r");
             if (!yyin) {
@@ -157,66 +157,19 @@ int main(int argc, char *argv[]) {
             } else {
                 return EXIT_FAILURE;
             }
+        } else if (strcmp(argv[i], "--print") == 0) {
+            yyin = fopen(argv[++i], "r");
+            if (!yyin) {
+                fprintf(stderr, "Could not open file %s\n", argv[i]);
+                return EXIT_FAILURE;
+            }
+
+            if (yyparse() == 0) {
+                decl_print(program_ast, 0);
+                return EXIT_SUCCESS;
+            } else {
+                return EXIT_FAILURE;
+            }
         }
     }
-}
-
-void string_encode(const char *s, char *es) {
-    *(es++) = '"';
-
-    for (; *s; s++) {
-        switch (*s) {
-            case '\a':
-                *(es++) = '\\';  // bell
-                *es = 'a';
-                break;
-            case '\b':
-                *(es++) = '\\';  // backspace
-                *es = 'b';
-                break;
-            case '\e':
-                *(es++) = '\\';  // escape
-                *es = 'e';
-                break;
-            case '\f':
-                *(es++) = '\\';  // form feed
-                *es = 'f';
-                break;
-            case '\n':
-                *(es++) = '\\';  // newline
-                *es = 'n';
-                break;
-            case '\r':
-                *(es++) = '\\';  // carriage return
-                *es = 'r';
-                break;
-            case '\t':
-                *(es++) = '\\';  // tab
-                *es = 't';
-                break;
-            case '\v':
-                *(es++) = '\\';  // vertical tab
-                *es = 'v';
-                break;
-            case '\\':
-                *(es++) = '\\';  // backslash
-                *es = '\\';
-                break;
-            case '\'':
-                *(es++) = '\\';  // single quote
-                *es = '\'';
-                break;
-            case '"':
-                *(es++) = '\\';  // double quote
-                *es = '"';
-                break;
-            default:
-                *es = *s;
-                break;
-        }
-        es++;
-    }
-
-    *(es++) = '"';  // ending quote
-    *es = '\0';     // null terminator
 }

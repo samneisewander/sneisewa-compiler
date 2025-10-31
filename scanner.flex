@@ -2,8 +2,11 @@
 	#include <stdbool.h>
     #include <stdlib.h>
     #include <stdio.h>
+    #include <errno.h>
+    #include <stdint.h>
 
 	#include "token.h"
+	#include "encoder.h"
 
 	#define MAX_STR_LEN 255
 
@@ -92,13 +95,88 @@ true    							{ return TOKEN_KEY_TRUE; }
 void    							{ return TOKEN_KEY_VOID; }
 while    							{ return TOKEN_KEY_WHILE; }
 
-({LETTER}|_)({ALPHANUM}|_){0,254} 	{ return TOKEN_IDENTIFIER; }
+({LETTER}|_)({ALPHANUM}|_){0,254} 	{ 
 
-{INTEGER_LITERAL}	  				{ return TOKEN_INTEGER_LITERAL; }
-{HEX_LITERAL}  						{ return TOKEN_HEX_LITERAL; }
-{BINARY_LITERAL}	  				{ return TOKEN_BINARY_LITERAL; }
-{DOUBLE}				    		{ return TOKEN_DOUBLE; }
-{DOUBLE_SCIENTIFIC}			    	{ return TOKEN_DOUBLE_SCIENTIFIC; }
+    yylval.identifier = strdup(yytext);
+
+    return TOKEN_IDENTIFIER; 
+}
+
+{INTEGER_LITERAL}	  				{ 
+
+    char *end_ptr = NULL;
+    int64_t literal = strtoll(yytext, &end_ptr, 10);
+
+    if (*end_ptr != '\0') {
+        fprintf(stderr, "scanner: Invalid integer literal.\n");
+        return TOKEN_ERROR;
+    }
+
+    yylval.int_literal = literal;
+
+    return TOKEN_INTEGER_LITERAL; 
+}
+{HEX_LITERAL}  						{ 
+    
+    char *end_ptr = NULL;
+    int64_t literal = strtoll(yytext, &end_ptr, 16);
+
+    if (*end_ptr != '\0') {
+        fprintf(stderr, "scanner: Invalid hex literal.\n");
+        return TOKEN_ERROR;
+    }
+
+    yylval.int_literal = literal;
+
+    return TOKEN_HEX_LITERAL; 
+}
+{BINARY_LITERAL}	  				{ 
+
+    char *end_ptr = NULL;
+    int64_t literal = strtoll(yytext + 2, &end_ptr, 2);
+
+    if (*end_ptr != '\0') {
+        fprintf(stderr, "scanner: Invalid binary literal.\n");
+        return TOKEN_ERROR;
+    }
+
+    yylval.int_literal = literal;
+
+    return TOKEN_BINARY_LITERAL; 
+}
+{DOUBLE}				    		{ 
+    
+    char *end_ptr = NULL;
+    
+    errno = 0;
+    double literal = strtod(yytext, &end_ptr);
+
+    if (*end_ptr != '\0' || errno == ERANGE) {
+        fprintf(stderr, "scanner: Invalid double literal.\n");
+        return TOKEN_ERROR;
+    }
+
+    yylval.double_literal = literal;
+
+    return TOKEN_DOUBLE; 
+}
+{DOUBLE_SCIENTIFIC}			    	{ 
+    
+    char *end_ptr = NULL;
+
+    errno = 0;
+    double literal = strtod(yytext, &end_ptr);
+
+    if (*end_ptr != '\0' || errno == ERANGE) {
+        fprintf(stderr, "scanner: Invalid scientific double literal.\n");
+        return TOKEN_ERROR;
+    }
+
+    yylval.double_literal = literal;
+
+    return TOKEN_DOUBLE_SCIENTIFIC; 
+
+}
 '{CHARACTER}'    					{ 
 	
 	char buf[MAX_STR_LEN + 1];
@@ -119,6 +197,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 	}
 
 	yytext[i] = '\0';
+    yylval.char_literal = buf[0];
 
 	return TOKEN_CHARACTER_LITERAL; 
 
@@ -137,6 +216,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 	}
 
 	yytext[i] = '\0';
+    yylval.string_literal = strdup(yytext);
 
 	return TOKEN_STRING_LITERAL;
 
@@ -151,147 +231,3 @@ while    							{ return TOKEN_KEY_WHILE; }
 %%
 
 int yywrap() { return 1; }
-
-bool string_decode(const char *es, char *s) {
-
-    if (es[0] == '\\') {
-        if (es[1] != '"') {
-            fprintf(stderr, "Encoder: String does not begin with \"\n");
-            return false;
-        }
-    } else if (es[0] != '"') {
-        fprintf(stderr, "Encoder: String does not begin with \"\n");
-        return false;
-    }
-    es++;
-
-    if (!*es) {
-        fprintf(stderr, "Encoder: String does not end with \"\n");
-        return false;
-    }
-
-    size_t string_length = 0;
-    char decoded_char;
-
-    // march through string until hit closing quotes
-    for (; *es; es++) {
-
-        decoded_char = *es;
-
-        if (32 > (int)*es || (int)*es > 127) {
-            fprintf(stderr, "Encoder: String contains ASCII values outside the legal range (32-127) \n");
-            return false;
-        }
-    
-        // 4. Handle escape sequences
-        if (*es == '\\') {
-            char highChar, lowChar;
-            int high, low;
-
-            // Maybe replace this with a hash table to make it faster
-            switch (*(++es)) {
-                case 'a':
-                    decoded_char = '\a'; // bell
-                    break;
-                case 'b':
-                    decoded_char = '\b'; // backspace
-                    break;
-                case 'e':
-                    decoded_char = '\e'; // escape
-                    break;
-                case 'f':
-                    decoded_char = '\f'; // form feed (clear)
-                    break;
-                case 'n':
-                    decoded_char = '\n'; // newline
-                    break;
-                case 'r':
-                    decoded_char = '\r'; // carriage return
-                    break;
-                case 't':
-                    decoded_char = '\t'; // tab
-                    break;
-                case 'v':
-                    decoded_char = '\v'; // verticle tab
-                    break;
-                case '\\':
-                    decoded_char = '\\'; // backslash
-                    break;
-                case '\'':
-                    decoded_char = '\''; // single quote
-                    break;
-                case '"':
-                    decoded_char = '"'; // double quote
-                    break;
-                case '0':
-                    //check if this is an escaped '0' or a hex sequence
-                    if (*(++es) != 'x') {
-                        decoded_char = '0';
-                        es--;
-                        break;
-                    }
-
-                    // read in the high and low nibbles of the hex sequence 
-                    highChar = *(++es);
-                    lowChar = *(++es);
-
-                    // check if high nibble is valid hex digit, convert to number
-                    if ( (highChar <= '9' && highChar >= '0') ) {
-                        high = highChar - '0';
-                    } else if (highChar <= 'f' && highChar >= 'a') {
-                        high = highChar - 'a' + 10;
-                    } else if (highChar <= 'F' && highChar >= 'A') {
-                        high = highChar - 'A' + 10;
-                    } else {
-                        // return 0 as the character, rescan these tokens.
-                        decoded_char = '0';
-                        es -= 3;
-                        break;
-                    }
-                    
-                    // check if low nibble is valid hex digit, convert to number
-                    if ( (lowChar <= '9' && lowChar >= '0') ) {
-                        low = lowChar - '0';
-                    } else if (lowChar <= 'f' && lowChar >= 'a') {
-                        low = lowChar - 'a' + 10;
-                    } else if (lowChar <= 'F' && lowChar >= 'A') {
-                        low = lowChar - 'A' + 10;
-                    } else {
-                        // return 0 as the character, rescan these tokens.
-                        decoded_char = '0';
-                        es -= 3;
-                        break;
-                    }
-
-                    // interpret nibbles as 2 digit hex humber 
-                    decoded_char = (high * 16) + low;
-                    break;
-
-                default:
-                    decoded_char = *es;
-            }
-
-        }
-        
-        // write this character to s
-        *(s + string_length) = decoded_char;
-        string_length++;
-
-        // Allow an extra character 255 + 1 because the closing double quotes which is stripped after this loop
-        if (string_length > 256) {
-            fprintf(stderr, "Encoder: String has length greater than 255\n");
-            return false;
-        }
-
-    }
-
-    // 3. String must end with "
-    if (*(es - 1) != '"') {
-        fprintf(stderr, "Encoder: String does not end with \"\n");
-        return false;
-    }
-    
-    *(s + string_length - 1) = '\0';
-    
-    return true;
-}
