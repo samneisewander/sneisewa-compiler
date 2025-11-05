@@ -28,7 +28,15 @@ void type_print(struct type* t) {
             printf("void");
             break;
         case TYPE_AUTO:
+            // Must infer syntax from t properties
             printf("auto");
+            if (t->array_size) {
+                // This must be an array
+                printf(" [");
+                expr_print(t->array_size);
+                printf("] ");
+                type_print(t->subtype);
+            }
             break;
         case TYPE_BOOLEAN:
             printf("boolean");
@@ -48,13 +56,13 @@ void type_print(struct type* t) {
         case TYPE_ARRAY:
             printf("array [");
             expr_print(t->array_size);
-            printf("]");
+            printf("] ");
             type_print(t->subtype);
             break;
         case TYPE_CARRAY:
             printf("carray [");
             expr_print(t->array_size);
-            printf("]");
+            printf("] ");
             type_print(t->subtype);
             break;
         case TYPE_FUNCTION:

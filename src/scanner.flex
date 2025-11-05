@@ -151,8 +151,13 @@ while    							{ return TOKEN_KEY_WHILE; }
     errno = 0;
     double literal = strtod(yytext, &end_ptr);
 
-    if (*end_ptr != '\0' || errno == ERANGE) {
+    if (*end_ptr != '\0') {
         fprintf(stderr, "scanner: Invalid double literal.\n");
+        return TOKEN_ERROR;
+    }
+
+    if (errno == ERANGE) {
+        fprintf(stderr, "scanner: Double exceeds floating point limit.\n");
         return TOKEN_ERROR;
     }
 
@@ -167,10 +172,16 @@ while    							{ return TOKEN_KEY_WHILE; }
     errno = 0;
     double literal = strtod(yytext, &end_ptr);
 
-    if (*end_ptr != '\0' || errno == ERANGE) {
+    if (*end_ptr != '\0') {
         fprintf(stderr, "scanner: Invalid scientific double literal.\n");
         return TOKEN_ERROR;
     }
+
+    if (errno == ERANGE) {
+        fprintf(stderr, "scanner: Scientific double exceeds floating point limit.\n");
+        return TOKEN_ERROR;
+    }
+
 
     yylval.double_literal = literal;
 

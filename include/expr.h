@@ -40,6 +40,7 @@ typedef enum {
     EXPR_SUBSCRIPT,
     EXPR_CALL,
     EXPR_ARG,
+    EXPR_ARRAY_INIT,
 
     EXPR_NAME,
     EXPR_INT,

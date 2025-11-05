@@ -114,7 +114,7 @@ struct decl *program_ast;
 */
 %type <decl> program decl decl.func decl.func.list decl.atomic decl.array func
 %type <stmt> stmt stmt.if.complex stmt.if.simple stmt.other stmt.for.complex stmt.for.simple stmt.list stmt.list.opt func.def func.def_or_semi
-%type <expr> expr expr.1 expr.2 expr.3 expr.4 expr.5 expr.6 expr.7 expr.8 expr.9 expr.10 decl.array.init decl.atomic.init expr.index expr.function expr.list expr.list.item expr.recursive.list expr.recursive.list.item expr.list.opt expr.opt
+%type <expr> expr expr.1 expr.2 expr.3 expr.4 expr.5 expr.6 expr.7 expr.8 expr.9 expr.10 decl.array.init decl.atomic.init expr.function expr.list expr.list.item expr.array.init expr.array.init.item expr.list.opt expr.opt expr.subscript.opt
 %type <type> types.atomic types.func.params types.array.key types.array types.return types.array.member
 %type <params> func.params func.params.list func.params.list.opt
 
@@ -154,8 +154,8 @@ decl.array      : TOKEN_IDENTIFIER TOKEN_COLON types.array decl.array.init TOKEN
 // From the spec: (of a decl) If no initializing value is given, default is zero
 decl.array.init : %empty
 				  { $$ = 0; }
-                | TOKEN_ASSIGNMENT expr.recursive.list
-				  { $$ = $2; }
+                | TOKEN_ASSIGNMENT TOKEN_LCURLY expr.array.init TOKEN_RCURLY
+				  { $$ = expr_create(EXPR_ARRAY_INIT, $3, 0); }
                 ;
 
 decl.atomic.init: %empty
@@ -194,7 +194,7 @@ func.params.list	: %empty
 func.params.list.opt: %empty
 		  			  { $$ = 0; }
         			| TOKEN_COMMA func.params func.params.list.opt
-		  			  { $2->next = $2; $$ = $2; }
+		  			  { $2->next = $3; $$ = $2; }
         			;
                         
 func.params     	: TOKEN_IDENTIFIER TOKEN_COLON types.array
@@ -345,10 +345,12 @@ expr.9  : expr.10 TOKEN_POSTFIX_INCREMENT
 
 expr.10 : TOKEN_LPAREN expr TOKEN_RPAREN
 		  { $$ = $2; }
-        | TOKEN_IDENTIFIER expr.index
+		| TOKEN_IDENTIFIER 
 		  { $$ = expr_create_name(yylval.identifier); }
+        | expr.subscript.opt
+		  { $$ = $1; }
         | TOKEN_IDENTIFIER expr.function
-		  { $$ = expr_create(EXPR_CALL, expr_create_name(yylval.identifier), $2); }
+		  { $$ = expr_create(EXPR_CALL, expr_create_name($1), $2); }
         | TOKEN_INTEGER_LITERAL
 		  { $$ = expr_create_integer_literal(yylval.int_literal); }
         | TOKEN_HEX_LITERAL
@@ -369,15 +371,20 @@ expr.10 : TOKEN_LPAREN expr TOKEN_RPAREN
 		  { $$ = expr_create_string_literal(yylval.string_literal); }
         ;
 
-expr.index      		: %empty
-		  				  { $$ = 0; }
-                		| TOKEN_LBRACKET expr TOKEN_RBRACKET expr.index
-		  				  { $$ = expr_create(EXPR_SUBSCRIPT, $2, $4); }
-                		;
+expr.subscript.opt		: TOKEN_IDENTIFIER TOKEN_LBRACKET expr TOKEN_RBRACKET
+						  { $$ = expr_create(EXPR_SUBSCRIPT, expr_create_name($1), $3); }
+						| expr.subscript.opt TOKEN_LBRACKET expr TOKEN_RBRACKET
+						  { $$ = expr_create(EXPR_SUBSCRIPT, $1, $3); }
+						;
 
 expr.function   		: TOKEN_LPAREN expr.list.opt TOKEN_RPAREN
 		  				  { $$ = $2; }
                 		;
+
+expr.list.opt   		: %empty
+		  				  { $$ = 0; }
+                		| expr.list
+		  				  { $$ = $1; }
 
 expr.list       		: expr expr.list.item
 		  				  { $$ = expr_create(EXPR_ARG, $1, $2); }
@@ -389,23 +396,17 @@ expr.list.item  		: %empty
 		  				  { $$ = $2; }
                 		;
 
-expr.recursive.list     : expr.list
+expr.array.init     	: expr.list
 		  				  { $$ = $1; }
-                        | TOKEN_LCURLY expr.recursive.list TOKEN_RCURLY expr.recursive.list.item
-		  				  { $2->right = $4; $$ = $2; }
+                        | TOKEN_LCURLY expr.array.init TOKEN_RCURLY expr.array.init.item
+		  				  { $$ = expr_create(EXPR_ARG, $2, $4); }
                         ;
 
-expr.recursive.list.item: %empty
+expr.array.init.item	: %empty
 		  				  { $$ = 0; }
-                        | TOKEN_COMMA expr.recursive.list
+                        | TOKEN_COMMA expr.array.init
 		  				  { $$ = $2; }
 						;
-
-expr.list.opt   		: %empty
-		  				  { $$ = 0; }
-                		| expr.list
-		  				  { $$ = $1; }
-                		;
 
 expr.opt        		: %empty
 		  				  { $$ = 0; }

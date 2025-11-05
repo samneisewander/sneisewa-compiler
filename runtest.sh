@@ -2,7 +2,7 @@
 
 for testfile in test/encode/good*.bminor
 do
-	if ./bminor --encode $testfile &> $testfile.out
+	if ./bin/bminor --encode $testfile &> $testfile.out
 	then
 		echo "$testfile success (as expected)"
 	else
@@ -12,7 +12,7 @@ done
 
 for testfile in test/encode/bad*.bminor
 do
-	if ./bminor --encode $testfile &> $testfile.out
+	if ./bin/bminor --encode $testfile &> $testfile.out
 	then
 		echo "$testfile success (INCORRECT)"
 	else
@@ -22,7 +22,7 @@ done
 
 for testfile in test/scanner/good*.bminor
 do
-	if ./bminor --scan $testfile &> $testfile.out
+	if ./bin/bminor --scan $testfile &> $testfile.out
 	then
 		echo "$testfile success (as expected)"
 	else
@@ -32,7 +32,7 @@ done
 
 for testfile in test/scanner/bad*.bminor
 do
-	if ./bminor --scan $testfile &> $testfile.out
+	if ./bin/bminor --scan $testfile &> $testfile.out
 	then
 		echo "$testfile success (INCORRECT)"
 	else
@@ -42,7 +42,7 @@ done
 
 for testfile in test/parser/good*.bminor
 do
-	if ./bminor --parse $testfile &> $testfile.out
+	if ./bin/bminor --parse $testfile &> $testfile.out
 	then
 		echo "$testfile success (as expected)"
 	else
@@ -52,7 +52,7 @@ done
 
 for testfile in test/parser/bad*.bminor
 do
-	if ./bminor --parse $testfile &> $testfile.out
+	if ./bin/bminor --parse $testfile &> $testfile.out
 	then
 		echo "$testfile success (INCORRECT)"
 	else
@@ -62,7 +62,7 @@ done
 
 for testfile in test/printer/*.bminor
 do
-	if ./bminor --print $testfile &> $testfile.out
+	if ./bin/bminor --print $testfile &> $testfile.out
 	then
 		echo "$testfile success (as expected)"
 	else

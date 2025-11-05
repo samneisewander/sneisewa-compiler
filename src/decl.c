@@ -31,7 +31,7 @@ void decl_print(struct decl* d, int indent) {
     type_print(d->type);
 
     if (d->value) {
-        printf(" =");
+        printf(" = ");
         expr_print(d->value);
         putc(';', stdout);
     } else if (d->code) {

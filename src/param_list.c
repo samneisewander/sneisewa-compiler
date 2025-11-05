@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 struct param_list* param_list_create(char* name, struct type* type, struct param_list* next) {
-    struct param_list* p = malloc(sizeof(*p));
+    struct param_list* p = calloc(1, sizeof(*p));
     p->name = name;
     p->type = type;
     p->next = next;
