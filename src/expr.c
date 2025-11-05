@@ -58,6 +58,14 @@ struct expr* expr_create_string_literal(const char* str) {
     return e;
 }
 
+// Pretty prints expr e, wrapped in parentheses
+void expr_print_parens(struct expr* e) {
+    putc('(', stdout);
+    expr_print(e);
+    putc(')', stdout);
+}
+
+// Pretty prints an expr, removing unnecessary whitespace or parentheses while preserving the structure of the AST. If expr is null, does nothing.
 void expr_print(struct expr* e) {
     if (!e) {
         return;
@@ -65,6 +73,22 @@ void expr_print(struct expr* e) {
 
     char buf[BUFSIZ] = {0};
 
+    /**
+     * This switch preserves order of operations by checking if the expr on
+     * the left has lower precedence than this operation, and wrapping
+     * it in parentheses if it does.
+     *
+     * Also, need to ensure AST node order is preserved, even if it makes
+     * no difference mathematically.
+     *
+     * For example, an expression like 1 + (2 + 3) must preserve the parens
+     * around (2 + 3), even though 1 + 2 + 3 evaluates to the same number.
+     *
+     * This eliminates errata with parsing and printing having to do with
+     * floating point operations. (Thanks Prof. Kogge for explaining that)
+     *
+     * It also makes operations that aren't commutative behave correctly.
+     */
     switch (e->kind) {
         case EXPR_ASSIGNMENT:
             expr_print(e->left);
@@ -73,165 +97,191 @@ void expr_print(struct expr* e) {
             break;
         case EXPR_LOGICAL_OR:
             if (e->left->kind < EXPR_LOGICAL_OR) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("||");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_LOGICAL_OR) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_LOGICAL_AND:
             if (e->left->kind < EXPR_LOGICAL_AND) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("&&");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_LOGICAL_AND) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_LESS_THAN:
             if (e->left->kind < EXPR_LESS_THAN) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("<");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_LESS_THAN) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_LESS_THAN_OR_EQUAL:
             if (e->left->kind < EXPR_LESS_THAN) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("<=");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_LESS_THAN_OR_EQUAL) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_EQUAL:
             if (e->left->kind < EXPR_LESS_THAN) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("==");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_EQUAL) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_GREATER_THAN:
             if (e->left->kind < EXPR_LESS_THAN) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf(">");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_GREATER_THAN) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_GREATER_THAN_OR_EQUAL:
             if (e->left->kind < EXPR_LESS_THAN) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf(">=");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_GREATER_THAN_OR_EQUAL) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_NOT_EQUAL:
             if (e->left->kind < EXPR_LESS_THAN) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("!=");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_NOT_EQUAL) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_ADD:
             if (e->left->kind < EXPR_ADD) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("+");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_ADD) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_SUBTRACT:
             if (e->left->kind < EXPR_ADD) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("-");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_SUBTRACT) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_MULTIPLY:
             if (e->left->kind < EXPR_MULTIPLY) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("*");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_MULTIPLY) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_DIVIDE:
             if (e->left->kind < EXPR_MULTIPLY) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("/");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_DIVIDE) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_REMAINDER:
             if (e->left->kind < EXPR_MULTIPLY) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("%%");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_NAME && e->right->kind <= EXPR_REMAINDER) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_EXPONENT:
-            if (e->left->kind < EXPR_EXPONENT) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+            if (e->left->kind < EXPR_NAME && e->left->kind <= EXPR_EXPONENT) {
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             printf("^");
-            expr_print(e->right);
+            if (e->right->kind < EXPR_EXPONENT) {
+                expr_print_parens(e->right);
+            } else {
+                expr_print(e->right);
+            }
             break;
         case EXPR_UNARY_NEGATION:
         case EXPR_LOGICAL_NOT:
             printf("!");
             if (e->left->kind < EXPR_UNARY_NEGATION) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
@@ -239,18 +289,14 @@ void expr_print(struct expr* e) {
         case EXPR_UNARY_ARRAY_LENGTH:
             printf("#");
             if (e->left->kind < EXPR_UNARY_ARRAY_LENGTH) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
             break;
         case EXPR_POSTFIX_INCREMENT:
             if (e->left->kind < EXPR_POSTFIX_INCREMENT) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
@@ -258,9 +304,7 @@ void expr_print(struct expr* e) {
             break;
         case EXPR_POSTFIX_DECREMENT:
             if (e->left->kind < EXPR_POSTFIX_INCREMENT) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
@@ -268,9 +312,7 @@ void expr_print(struct expr* e) {
             break;
         case EXPR_SUBSCRIPT:
             if (e->left->kind < EXPR_SUBSCRIPT) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }
@@ -280,9 +322,7 @@ void expr_print(struct expr* e) {
             break;
         case EXPR_CALL:
             if (e->left->kind < EXPR_SUBSCRIPT) {
-                putc('(', stdout);
-                expr_print(e->left);
-                putc(')', stdout);
+                expr_print_parens(e->left);
             } else {
                 expr_print(e->left);
             }

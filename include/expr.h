@@ -6,6 +6,15 @@
 
 #include "symbol.h"
 
+/**
+ * Kinds of expressions. Operators are ordered by precedence,
+ * where higher number means higher precedence. Kinds that not
+ * seperated by whitespace have equal precedence. Printing
+ * functions rely on this ordering; it must be preserved.
+ *
+ * Similarly, atomic expressions and names of identifiers must
+ * appear last.
+ */
 typedef enum {
     EXPR_ASSIGNMENT,
 
@@ -76,5 +85,5 @@ struct expr* expr_create_char_literal(char c);
 struct expr* expr_create_string_literal(const char* str);
 
 void expr_print(struct expr* e);
-
+void expr_print_parens(struct expr* e);
 #endif

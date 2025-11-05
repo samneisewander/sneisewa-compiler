@@ -315,7 +315,7 @@ expr.5  : expr.5 TOKEN_MULTIPLY expr.6
 		  { $$ = $1; }
         ;
 
-expr.6  : expr.6 TOKEN_EXPONENT expr.7
+expr.6  : expr.7 TOKEN_EXPONENT expr.6
 		  { $$ = expr_create(EXPR_EXPONENT, $1, $3); }
         | expr.7
 		  { $$ = $1; }
