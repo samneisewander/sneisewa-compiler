@@ -11,8 +11,10 @@ main: function void() = {
 
     return;
 
-    y = m*x + b;
+    y = m * x + b;
 
     i = j = k = 0;
+
+    j: integer = myfunct(2, 3, 4);
 
 }

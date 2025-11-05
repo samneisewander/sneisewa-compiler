@@ -1,6 +1,6 @@
 // Expression in function arguments
 
-//b: integer = myfunct(2, 5 + 5);
+b: integer = myfunct(2, 5 + 5);
 
 main: function void() = {
     myfunct(2, 5 + 5);

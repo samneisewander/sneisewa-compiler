@@ -1,3 +1,4 @@
-i: function integer ( x: array [5] integer, y: array [5] array [5] integer ) = {
-	return;
-}
+// High dimensional array
+
+b: array [2] array [2] boolean = {{true,false},{true,false}};
+b: carray [2] array [2] boolean = {{true,false},{true,false}};

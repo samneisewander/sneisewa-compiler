@@ -1,1 +1,5 @@
-    x: array [5] integer = {1,2,3,4,5};
+// Auto type
+a: auto = 15;
+b: auto = "hello world";
+c: auto [2 + 4] auto [10] boolean;
+d: function auto (x: auto, y: auto);
