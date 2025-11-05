@@ -1,54 +1,51 @@
+# Configuration
 .PHONY: test
 CC=gcc
-CFLAGS=-Wall -g -std=gnu99
+CFLAGS=-Wall -g -std=gnu99 -Iinclude
 LD=gcc
-PARSEGEN=bison
-SCANGEN=flex
+LDFLAGS=
+LIBS=
 
-bminor: bminor.o encoder.o scanner.o parser.o decl.o expr.o param_list.o stmt.o type.o
-	$(CC) $(CFLAGS) -o $@ $^
+# bminor depends on everything in the source directory, plus the scanner and parser C output files from flex/bison
+BMINOR_SOURCES= $(wildcard src/*.c)
+BMINOR_OBJECTS=	$(BMINOR_SOURCES:src/%.c=build/%.o) build/parser.o build/scanner.o
 
-bminor.o: bminor.c token.h
-	$(CC) $(CFLAGS) -o $@ -c $<
+COMPILER=bin/bminor
 
-scanner.o: scanner.c
-	$(CC) $(CFLAGS) -o $@ -c $^
+all: $(COMPILER)
 
-parser.o: parser.c
-	$(CC) $(CFLAGS) -o $@ -c $^
+$(COMPILER): $(BMINOR_OBJECTS) token.h
+	@echo "Linking $@"
+	@$(LD) $(LDFLAGS) -o $@ $(BMINOR_OBJECTS) $(LIBS)
 
-scanner.c: scanner.flex token.h
-	$(SCANGEN) -o $@ $^
+# Rules
+parser.o: build/parser.c
+	@$(CC) $(CFLAGS) -c -o build/$@ $<
 
-decl.o: decl.c
-	$(CC) $(CFLAGS) -o $@ -c $^
+scanner.o: build/scanner.c
+	@$(CC) $(CFLAGS) -c -o build/$@ $<
 
-expr.o: expr.c
-	$(CC) $(CFLAGS) -o $@ -c $^
+build/%.o: src/%.c token.h
+	@echo "Compiling object dependency $@"
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
-param_list.o: param_list.c
-	$(CC) $(CFLAGS) -o $@ -c $^
+build/scanner.c: src/scanner.flex token.h
+	@echo "Generating scanner source $@"
+	flex -o $@ $<
 
-stmt.o: stmt.c
-	$(CC) $(CFLAGS) -o $@ -c $^
+token.h build/parser.c: src/parser.bison
+	@echo "Generating parser source and token header file"
+	bison --defines=include/token.h --output=build/parser.c $^
 
-type.o: type.c
-	$(CC) $(CFLAGS) -o $@ -c $^
-
-encoder.o: encoder.c
-	$(CC) $(CFLAGS) -o $@ -c $^
-
-token.h parser.c: parser.bison
-	$(PARSEGEN) -v --defines=token.h --output=parser.c $^
-
-
-test:
+test: all
 	@echo "Running tests..."
 	chmod +x runtest.sh
 	./runtest.sh
 
 clean:
 	@echo "Cleaning up..."
-	rm -f *.o bminor scanner.c parser.c token.h parser.output
+	rm -f build/*
+	rm -f bin/*
+	rm -f include/token.h
 	rm -f test/*/*.out
 
