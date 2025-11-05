@@ -1,1 +1,75 @@
-x: array [5] array [3] integer = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
+// Maintaining AST ordering 
+
+main: function void() = {
+    
+    // Assignment
+
+    // Or
+
+    // And
+
+    // Comparison
+    x: integer = 1 || (2 || 3);
+    x: integer = (1 || 2) || 3;
+    x: integer = 1 || 2 || 3;
+
+    x: integer = 1 && (2 && 3);
+    x: integer = (1 && 2) && 3;
+    x: integer = 1 && 2 && 3;
+
+    x: integer = 1 < (2 < 3);
+    x: integer = (1 < 2) < 3;
+    x: integer = 1 < 2 < 3;
+    
+    x: integer = 1 <= (2 <= 3);
+    x: integer = (1 <= 2) <= 3;
+    x: integer = 1 <= 2 <= 3;
+
+    x: integer = 1 == (2 == 3);
+    x: integer = (1 == 2) == 3;
+    x: integer = 1 == 2 == 3;
+    
+    x: integer = 1 > (2 > 3);
+    x: integer = (1 > 2) > 3;
+    x: integer = 1 > 2 > 3;
+    
+    x: integer = 1 >= (2 >= 3);
+    x: integer = (1 >= 2) >= 3;
+    x: integer = 1 >= 2 >= 3;
+    
+    x: integer = 1 != (2 != 3);
+    x: integer = (1 != 2) != 3;
+    x: integer = 1 != 2 != 3;
+
+    // Add, subtract  
+    x: integer = 1 + (2 + 3);
+    x: integer = (1 + 2) + 3;
+    x: integer = 1 + 2 + 3;
+
+    x: integer = 1 - (2 - 3);
+    x: integer = (1 - 2) - 3;
+    x: integer = 1 - 2 - 3;
+
+    // Multiply, divide, remainder
+    x: integer = 1 * (2 * 3);
+    x: integer = (1 * 2) * 3;
+    x: integer = 1 * 2 * 3;
+
+    x: integer = 1 / (2 / 3);
+    x: integer = (1 / 2) / 3;
+    x: integer = 1 / 2 / 3;
+
+    // Exponents
+    x: integer = 3 ^ (2 ^ 3);
+    x: integer = (3 ^ 2) ^ 3;
+    x: integer = 3 ^ 2 ^ 3;
+
+
+    // Negation, not
+
+    // Array length
+
+    // postfix increment, decrement
+    
+    // array subscript, function call
+}
