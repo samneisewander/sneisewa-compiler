@@ -1,10 +1,11 @@
-main: function auto() = {
-    if (true) for (;;) 
-    
-    
-    if 
-    
-    
-    
-    (true) if (true) print i; else return k; else return j;
+// Dropping else block
+
+main: function void() = {
+
+    if (10 <= i) {
+        for (i; i < 10; i++) if (i > 3) print i;
+    } else {
+        print k;
+    }
+
 }

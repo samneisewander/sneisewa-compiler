@@ -47,5 +47,5 @@ clean:
 	rm -f build/*
 	rm -f bin/*
 	rm -f include/token.h
-	rm -f test/*/*.out
+	rm -f test/*/*.out test/*/*.pretty
 

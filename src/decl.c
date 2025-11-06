@@ -41,5 +41,6 @@ void decl_print(struct decl* d, int indent) {
         putc(';', stdout);
     }
 
+    putc('\n', stdout);
     decl_print(d->next, indent);
 }

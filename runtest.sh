@@ -62,10 +62,19 @@ done
 
 for testfile in test/printer/*.bminor
 do
+	./bin/bminor --print $testfile &> $testfile.pretty
+done
+for testfile in test/printer/*.pretty
+do
 	if ./bin/bminor --print $testfile &> $testfile.out
 	then
-		echo "$testfile success (as expected)"
+		if diff $testfile $testfile.out &> /dev/null
+		then
+			echo "$testfile success (as expected)"
+		else
+			echo "$testfile bad diff (INCORRECT)"
+		fi
 	else
-		echo "$testfile failure (INCORRECT)"
+		echo "$testfile parse failure (INCORRECT)"
 	fi
 done

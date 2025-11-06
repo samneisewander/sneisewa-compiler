@@ -48,7 +48,7 @@ void stmt_print(struct stmt* s, int indent) {
 
                 printf("\n");
                 for (int i = 0; i < indent; i++) putc('\t', stdout);
-                printf("}\n");
+                printf("}");
             } else {
                 stmt_print(s->body, indent);
             }
@@ -57,7 +57,23 @@ void stmt_print(struct stmt* s, int indent) {
                 printf("\n");
                 for (int i = 0; i < indent; i++) putc('\t', stdout);
                 printf("else ");
-                stmt_print(s->else_body, indent);
+
+                if (s->else_body->kind == STMT_IF_ELSE) {
+                    stmt_print(s->else_body, indent);
+                } else if (s->else_body->kind != STMT_BLOCK) {
+                    printf("\n");
+                    for (int i = 0; i < indent; i++) putc('\t', stdout);
+                    printf("{\n");
+
+                    stmt_print(s->else_body, indent + 1);
+
+                    printf("\n");
+                    for (int i = 0; i < indent; i++) putc('\t', stdout);
+                    printf("}");
+                } else {
+                    printf("\n");
+                    stmt_print(s->else_body, indent);
+                }
             }
             break;
         case STMT_FOR:
@@ -78,7 +94,7 @@ void stmt_print(struct stmt* s, int indent) {
 
                 printf("\n");
                 for (int i = 0; i < indent; i++) putc('\t', stdout);
-                printf("}\n");
+                printf("}");
             } else {
                 stmt_print(s->body, indent);
             }
@@ -105,7 +121,6 @@ void stmt_print(struct stmt* s, int indent) {
             putc('\n', stdout);
             for (int i = 0; i < indent; i++) putc('\t', stdout);
             printf("}");
-
             break;
     }
 

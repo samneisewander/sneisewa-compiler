@@ -365,7 +365,7 @@ void expr_print(struct expr* e) {
             }
             break;
         case EXPR_CHAR:
-            printf("'\\%x'", e->char_literal);
+            printf("'\\0x%x'", e->char_literal);
             break;
         case EXPR_STRING:
             string_encode(e->string_literal, buf);

@@ -218,7 +218,7 @@ stmt    : stmt.if.complex
 
 // Case: A nested complex if inside a complex if, or daisy chaining complex if statements.
 stmt.if.complex : TOKEN_KEY_IF TOKEN_LPAREN expr TOKEN_RPAREN stmt.if.complex TOKEN_KEY_ELSE stmt.if.complex
-				  { $$ = stmt_create(STMT_IF_ELSE, 0, 0, $3, 0, $5, 0, 0); }
+				  { $$ = stmt_create(STMT_IF_ELSE, 0, 0, $3, 0, $5, $7, 0); }
                 | TOKEN_KEY_IF TOKEN_LPAREN expr TOKEN_RPAREN stmt.for.complex TOKEN_KEY_ELSE stmt.if.complex
 				  { $$ = stmt_create(STMT_IF_ELSE, 0, 0, $3, 0, $5, $7, 0); }
                 | stmt.other
@@ -335,9 +335,9 @@ expr.8  : TOKEN_UNARY_ARRAY_LENGTH expr.8
 		  { $$ = $1; }
         ;
 
-expr.9  : expr.10 TOKEN_POSTFIX_INCREMENT
+expr.9  : expr.9 TOKEN_POSTFIX_INCREMENT
 		  { $$ = expr_create(EXPR_POSTFIX_INCREMENT, $1, 0); }
-        | expr.10 TOKEN_POSTFIX_DECREMENT
+        | expr.9 TOKEN_POSTFIX_DECREMENT
 		  { $$ = expr_create(EXPR_POSTFIX_DECREMENT, $1, 0); }
         | expr.10
 		  { $$ = $1; }
