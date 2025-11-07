@@ -30,5 +30,3 @@ main:function void () = {
     if (10 <= i) for (i; i < 10; i++) if (i > 3) print i; else print j; else print k;
 
 }
-
-

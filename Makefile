@@ -12,7 +12,7 @@ BMINOR_OBJECTS=	$(BMINOR_SOURCES:src/%.c=build/%.o) build/parser.o build/scanner
 
 COMPILER=bin/bminor
 
-all: $(COMPILER)
+all: build bin $(COMPILER)
 
 $(COMPILER): $(BMINOR_OBJECTS) token.h
 	@echo "Linking $@"
@@ -37,6 +37,12 @@ token.h build/parser.c: src/parser.bison
 	@echo "Generating parser source and token header file"
 	bison --defines=include/token.h --output=build/parser.c $^
 
+build:
+	@mkdir -p build
+
+bin:
+	@mkdir -p bin
+
 test: all
 	@echo "Running tests..."
 	chmod +x runtest.sh
@@ -44,8 +50,8 @@ test: all
 
 clean:
 	@echo "Cleaning up..."
-	rm -f build/*
-	rm -f bin/*
+	rm -rf build
+	rm -rf bin
 	rm -f include/token.h
 	rm -f test/*/*.out test/*/*.pretty
 

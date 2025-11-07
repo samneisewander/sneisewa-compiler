@@ -1,7 +1,18 @@
 {
     "files.associations": {
+        "*.bison": "yacc",
         "stdbool.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "array": "cpp",
+        "string_view": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "type_traits": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "scope.h": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }
