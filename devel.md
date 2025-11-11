@@ -2,6 +2,17 @@
 
 ## Assignment Questions
 
+### Resolver
+
+> What AI tools (if any) did you use, and what sort of prompts did you provide?
+Didn't use AI.
+> What parts of the code were easy to get right?
+This one wasn't actually that hard. The various resolve functions were clearly described in the textbook, and were pretty simple to implement.
+
+> What parts were difficult to get right and required more effort?
+Debugging was the hardest part. I had one issue where my global stack was getting overwritten, and it was hard to determine where that was happening without staring at GDB for a long, long time. Turned out that I had forgetten to `break` a case in my switch statement.
+
+
 ### Printer
 
 > What AI tools (if any) did you use, and what sort of prompts did you provide?
