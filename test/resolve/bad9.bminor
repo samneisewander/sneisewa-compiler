@@ -1,0 +1,24 @@
+// order of operations
+
+main: function void() = {
+    x: integer = y = true || true;
+    x: integer = (true || true) && true;
+    x: integer = (true && true) < true;
+    x: integer = true < (true <= true) > true; // should be grouped
+    x: integer = (true && 3) + 4;
+    x: integer = (true && 3) - 4;
+    x: integer = (5 + 3) - 4;
+    x: integer = (5 + 3) * 8;
+    x: integer = (5 + 3) / 8;
+    x: integer = (5 + 3) % 8;
+    x: integer = (5 * 3) / 8;
+    x: integer = (5 * 3) % 8;
+    x: integer = (5 % 3) ^ 8;
+    x: integer = !(5 ^ 3);
+    x: integer = !5 ^ 3;
+    x: integer = #(!arr);
+    x: integer = (arr + 3)++;
+    x: integer = (arr++)--;
+    x: integer = 3 + arr[5];
+    x: integer = 3 + arr[5][(5 + 3) * 8];
+}

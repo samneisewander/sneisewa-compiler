@@ -1,0 +1,10 @@
+main: function void() = {
+    i: integer = 5;
+    for (i = 0; i<5; i++) {
+        if (true) {
+            x: integer = 5;
+        }
+        print x;
+    }
+    print x;
+}

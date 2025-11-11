@@ -1,0 +1,8 @@
+// Same name bound in different scopes
+main: function void() = {
+    x: integer = 3;
+    if (3<5) { 
+        x: integer = 5;
+        print x;
+    }
+}

@@ -1,0 +1,28 @@
+// Checking which is set correctly
+x: integer = 5;
+y: integer = 5;
+
+funct: function auto(x: auto, y: auto) = {
+    x: integer = 5;
+    print x;
+    if (true) {
+        y: integer = 5;
+        print y;
+    }
+    z: integer = 5;
+    y: integer = 5;
+    print z, y;
+    for (x = 4; x < 5; x++) {
+        x: integer = 5;
+        print x;
+        if (true) {
+            x: integer = 6;
+            y: integer = 6;
+            print x, y;
+        }
+        y: integer = 6;
+        print y;
+    }
+    j: integer = 6;
+    print j;
+}

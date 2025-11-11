@@ -1,0 +1,7 @@
+// Locals, if statements
+main: function void() = {
+    i: integer;
+    if (true) {
+        x: integer = 5;
+    }
+}

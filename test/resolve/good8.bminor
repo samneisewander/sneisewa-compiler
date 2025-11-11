@@ -1,0 +1,8 @@
+// Params higher precedence than globals
+x: integer = 5;
+y: integer = 5;
+
+funct: function auto(x: auto, y: auto) = {
+    print x, y;
+    return x + y;
+}

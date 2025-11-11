@@ -1,0 +1,5 @@
+// Auto
+funct: function auto(x: auto, y: auto) = {
+    print x, y;
+    return x + y;
+}

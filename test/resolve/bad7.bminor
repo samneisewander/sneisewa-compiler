@@ -1,0 +1,11 @@
+funct1: function integer() = {
+    i: integer = 5;
+}
+
+main: function void() = {
+    for (i = 0; i<5; i++) {
+        if (true) {
+            x: integer = 5;
+        }
+    }
+}
