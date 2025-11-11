@@ -2,180 +2,111 @@
 
 #include "scope.h"
 
+#include <stdbool.h>
+
+#include "error.h"
 #include "hash_table.h"
 #include "symbol.h"
 
 typedef struct Node {
     struct hash_table* symbol_table;
     struct Node* next;
-    struct Node* prev;
+    scope_t scope_kind;
+    int symbol_count;
 } Node;
 
 typedef struct {
-    size_t size;
     Node* head;
+    size_t size;
 } Stack;
 
 Stack Symbol_table_stack = {.size = 0, .head = NULL};
 
-/* PRIVATE METHODS */
-
-/**
- * Factory method for the Node structure. User should call node_delete on the
- * pointer returned by this method. Always returns a valid pointer; on
- * error, the program exits.
- */
-static Node* node_create() {
+void scope_enter(scope_t scope_kind) {
     Node* n = (Node*)calloc(1, sizeof(*n));
-
-    if (!n) {
-        fprintf(stderr, "Node_create: calloc failure\n");
-        exit(EXIT_FAILURE);
-    }
-
     n->symbol_table = hash_table_create(0, 0);
 
-    return n;
-}
-
-/**
- * Releases the memory allocated for a Node n. If n is NULL, does nothing.
- * Note that while the node structure is freed and the hash table is
- * deleted, the values in the hash table are not released.
- */
-static void node_delete(Node* n) {
-    if (!n) return;
-    hash_table_delete(n->symbol_table);
-    free(n);
-}
-
-/**
- * NOTE: Unused, since the symbol table stack is a global in this implementation
- *
- * Factory method for the Stack structure. User should call stack_delete on the
- * pointer returned by this method. Always returns a valid pointer; on
- * error, the program exits.
- */
-static Stack* stack_create() {
-    Stack* s = (Stack*)calloc(1, sizeof(*s));
-
-    if (!s) {
-        fprintf(stderr, "stack_create: calloc failure\n");
-        exit(EXIT_FAILURE);
+    // Do we carry over "which", or reset? If this scope is for a function, need reset.
+    // if this scope is for a STMT_BLOCK, then it should carry over.
+    n->scope_kind = scope_kind;
+    if (scope_kind == SCOPE_STMT_BLOCK) {
+        n->symbol_count = Symbol_table_stack.head->symbol_count;
     }
 
-    return s;
-}
-
-/**
- * NOTE: Unused, since the symbol table stack is a global in this implementation
- *
- * Releases the memory allocated for a Stack s, including memory allocated
- * for nodes remaining on the stack if there are any. If s is NULL, does
- * nothing.
- */
-static void stack_delete(Stack* s) {
-    if (!s) return;
-    if (s->head) {
-        Node* curr = s->head;
-        Node* next = NULL;
-
-        while (curr) {
-            next = curr->next;
-            node_delete(curr);
-            curr = next;
-        }
-    }
-
-    free(s);
-}
-
-/**
- * Pushes a Node n onto a Stack s.
- */
-static void stack_push(Node* node, Stack* s) {
-    if (s->head) {
-        node->prev = s->head;
-        s->head->next = node;
-        s->head = node;
+    if (Symbol_table_stack.head) {
+        n->next = Symbol_table_stack.head;
+        Symbol_table_stack.head = n;
     } else {
-        s->head = node;
+        Symbol_table_stack.head = n;
     }
-    s->size++;
-}
 
-/**
- * Pops a Node from a Stack s. If the stack is empty, returns NULL. The user
- * is expected to release memory allocated for the popped node by calling
- * node_delete.
- */
-static Node* stack_pop(Stack* s) {
-    Node* node = NULL;
-    if (s->head) {
-        node = s->head;
-        s->head = s->head->prev;
-        node->next = NULL;
-        node->prev = NULL;
-        s->size--;
-    }
-    return node;
-}
-
-/**
- * Returns the Node at the top of the stack s, or NULL if s is empty.
- */
-static Node* stack_top(Stack* s) {
-    /**
-     * This module returns a Node*, and not a struct hash_table*. This
-     * is to facilitate backwards traversal through the stack during scope lookup.
-     */
-    if (!s) return NULL;
-    if (!s->head) return NULL;
-    return s->head;
-}
-
-/* PUBLIC METHODS */
-
-void scope_enter() {
-    Node* n = node_create();
-    stack_push(n, &Symbol_table_stack);
+    Symbol_table_stack.size++;
 }
 
 void scope_exit() {
-    Node* n = stack_pop(&Symbol_table_stack);
-    node_delete(n);
+    Node* head = Symbol_table_stack.head;
+    if (!head) fprintf(stderr, "resolver: cannot exit scope without first entering one.\n");
+
+    // Carry over symbol "which" count if we are exiting a STMT_BLOCK
+    if (head->scope_kind == SCOPE_STMT_BLOCK) {
+        head->next->symbol_count = head->symbol_count;
+    }
+
+    if (head->next) {
+        Symbol_table_stack.head = head->next;
+        head->next = NULL;
+    }
+
+    hash_table_delete(head->symbol_table);
+    free(head);
+
+    Symbol_table_stack.size--;
 }
 
 void scope_bind(const char* name, struct symbol* s) {
-    Node* n = stack_top(&Symbol_table_stack);
-    struct hash_table* scope = n->symbol_table;
+    if (!Symbol_table_stack.head) fprintf(stderr, "resolver: attempt to bind name without first entering a scope.\n");
+
+    struct hash_table* scope = Symbol_table_stack.head->symbol_table;
+
+    struct symbol* is_name_bound = hash_table_lookup(scope, name);
+    if (is_name_bound) {
+        fprintf(stderr, "resolver: cannot bind name %s more than once in the same scope.\n", name);
+        set_error(true);
+        return;
+    }
+
+    s->which = Symbol_table_stack.head->symbol_count++;
+
     int status = hash_table_insert(scope, name, s);
     if (!status) {
-        fprintf(stderr, "scope_bind: Could not bind symbol to name %s\n", name);
+        fprintf(stderr, "resolver: could not bind symbol to name %s\n", name);
+        set_error(true);
     }
 }
 
 struct symbol* scope_lookup(const char* name) {
-    Node* node = stack_top(&Symbol_table_stack);
     struct symbol* sym = NULL;
+    char* symbol_kind = NULL;
 
-    while (node) {
-        sym = hash_table_lookup(node->symbol_table, name);
+    Node* head = Symbol_table_stack.head;
+    while (head) {
+        sym = hash_table_lookup(head->symbol_table, name);
         if (sym) {
+            switch (sym->kind) {
+                case SYMBOL_LOCAL:
+                    symbol_kind = "local";
+                    break;
+                case SYMBOL_GLOBAL:
+                    symbol_kind = "global";
+                    break;
+                case SYMBOL_PARAM:
+                    symbol_kind = "param";
+                    break;
+            }
+            printf("%s resolves to %s %d\n", name, symbol_kind, sym->which);
             return sym;
         }
-        node = node->prev;
-    }
-
-    return NULL;
-}
-
-struct symbol* scope_lookup_current(const char* name) {
-    Node* node = stack_top(&Symbol_table_stack);
-    struct symbol* sym = hash_table_lookup(node->symbol_table, name);
-
-    if (sym) {
-        return sym;
+        head = head->next;
     }
 
     return NULL;

@@ -13,12 +13,16 @@
 
 #include "symbol.h"
 
-/* PUBLIC METHODS */
+typedef enum {
+    SCOPE_GLOBAL,
+    SCOPE_FUNCTION,
+    SCOPE_STMT_BLOCK
+} scope_t;
 
 /**
  * Causes a new hash table to be pushed on the top of the stack, representing a new scope.
  */
-void scope_enter();
+void scope_enter(scope_t scope_kind);
 
 /**
  * Pop the current scope from the symbol table stack.
@@ -26,8 +30,12 @@ void scope_enter();
 void scope_exit();
 
 /**
- * Insert into the current scope an entry binding a name (identifier) to a symbol object.
- *  */
+ * Insert into the current scope an entry binding a name (identifier) to a symbol object, and setting its "which" property, indicating its position in relative to the frame pointer.
+ *
+ * Before calling this method for the first time, the user is expected to initialize the symbol table stack by entering a scope calling scope_enter(SCOPE_GLOBAL).
+ *
+ * This method is responsible for reporting multiple definitions of a name in the same scope. If this occurs, the new definition is discarded and the existing definition remains bound to the name.
+ * */
 void scope_bind(const char* name, struct symbol* s);
 
 /**
@@ -36,9 +44,9 @@ void scope_bind(const char* name, struct symbol* s);
 struct symbol* scope_lookup(const char* name);
 
 /**
- * Works like scope lookup except that it only searches the topmost table. This is used to determine whether a symbol has already been defined in the current scope.
+ * Works like scope_lookup except that it only searches the topmost table. This is used to determine whether a symbol has already been defined in the current scope.
  */
-struct symbol* scope_lookup_current(const char* name);
+// struct symbol* scope_lookup_current(const char* name);
 
 /**
  * Returns the depth of the symbol table stack.

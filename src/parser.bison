@@ -204,15 +204,17 @@ func.params     	: TOKEN_IDENTIFIER TOKEN_COLON types.array
 					;
 
 // ----- STATEMENTS -----
-stmt    : stmt.if.complex
-		  { $$ = $1; }
-        | stmt.if.simple 
-		  { $$ = $1; }
-        | stmt.for.simple
-		  { $$ = $1; }
-        | stmt.for.complex
-		  { $$ = $1; }
-        ;
+stmt    		: stmt.if.complex
+				  { $$ = $1; }
+        		| stmt.if.simple 
+				  { $$ = $1; }
+        		| stmt.for.simple
+				  { $$ = $1; }
+        		| stmt.for.complex
+				  { $$ = $1; }
+				| decl
+				  { $$ = stmt_create(STMT_DECL, $1, 0, 0, 0, 0, 0, 0); }
+        		;
 
 // Dangling Else Problem: Need to prevent simple if statement from appearing inside complex if statement.
 

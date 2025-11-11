@@ -2,11 +2,14 @@
 
 #include "expr.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "encoder.h"
+#include "error.h"
+#include "scope.h"
 
 struct expr* expr_create(expr_t kind, struct expr* left, struct expr* right) {
     struct expr* e = calloc(1, sizeof(*e));
@@ -58,14 +61,12 @@ struct expr* expr_create_string_literal(const char* str) {
     return e;
 }
 
-// Pretty prints expr e, wrapped in parentheses
 void expr_print_parens(struct expr* e) {
     putc('(', stdout);
     expr_print(e);
     putc(')', stdout);
 }
 
-// Pretty prints an expr, removing unnecessary whitespace or parentheses while preserving the structure of the AST. If expr is null, does nothing.
 void expr_print(struct expr* e) {
     if (!e) {
         return;
@@ -371,5 +372,19 @@ void expr_print(struct expr* e) {
             string_encode(e->string_literal, buf);
             printf("%s", buf);
             break;
+    }
+}
+
+void expr_resolve(struct expr* e) {
+    if (!e) return;
+    if (e->kind == EXPR_NAME) {
+        e->symbol = scope_lookup(e->name);
+        if (!e->symbol) {
+            fprintf(stderr, "resolve error: %s is not defined.\n", e->name);
+            set_error(true);
+        }
+    } else {
+        expr_resolve(e->left);
+        expr_resolve(e->right);
     }
 }

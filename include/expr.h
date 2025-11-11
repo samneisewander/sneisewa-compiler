@@ -84,6 +84,21 @@ struct expr* expr_create_boolean_literal(bool c);
 struct expr* expr_create_char_literal(char c);
 struct expr* expr_create_string_literal(const char* str);
 
+/**
+ * Pretty prints an expr, removing unnecessary whitespace or parentheses while preserving the structure of the AST. If expr is null, does nothing.
+ */
 void expr_print(struct expr* e);
+
+/**
+ * Pretty prints expr e, wrapped in parentheses.
+ */
 void expr_print_parens(struct expr* e);
+
+/**
+ * @brief Performs name resolution on an expression.
+ *
+ * Creates a new symbol, binding it to the name of the declaration in the current scope. If the declaration represents an expression (d->value is not null) then the expression is resolved. If the declaration represents a function (d->code is not null), creates a new scope and resolves the parameters and code.
+ * @param d decl on which to perform name resolution.
+ */
+void expr_resolve(struct expr* e);
 #endif

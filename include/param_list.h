@@ -16,6 +16,12 @@ struct param_list {
 };
 
 struct param_list* param_list_create(char* name, struct type* type, struct param_list* next);
+
 void param_list_print(struct param_list* a);
+
+/**
+ * Enters a new variable declaration for each parameter of a function into the symbol table, so that those definitions are available to the code of a function.
+ */
+void param_list_resolve(struct param_list* a);
 
 #endif
