@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "error.h"
 #include "scope.h"
 
 struct param_list* param_list_create(char* name, struct type* type, struct param_list* next) {
@@ -35,6 +36,11 @@ void param_list_print(struct param_list* a) {
 
 void param_list_resolve(struct param_list* a) {
     if (!a) return;
-    scope_bind(a->name, symbol_create(SYMBOL_PARAM, a->type, a->name));
+    if (scope_lookup_current(a->name)) {
+        fprintf(stderr, "resolver: duplicate parameter %s in function.\n", a->name);
+        set_error(true);
+    } else {
+        scope_bind(a->name, symbol_create(SYMBOL_PARAM, a->type, a->name));
+    }
     param_list_resolve(a->next);
 }

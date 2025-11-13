@@ -67,14 +67,6 @@ void scope_bind(const char* name, struct symbol* s) {
     if (!Symbol_table_stack.head) fprintf(stderr, "resolver: attempt to bind name without first entering a scope.\n");
 
     struct hash_table* scope = Symbol_table_stack.head->symbol_table;
-
-    struct symbol* is_name_bound = hash_table_lookup(scope, name);
-    if (is_name_bound) {
-        fprintf(stderr, "resolver: cannot bind name %s more than once in the same scope.\n", name);
-        set_error(true);
-        return;
-    }
-
     s->which = Symbol_table_stack.head->symbol_count++;
 
     int status = hash_table_insert(scope, name, s);
@@ -107,6 +99,30 @@ struct symbol* scope_lookup(const char* name) {
             return sym;
         }
         head = head->next;
+    }
+
+    return NULL;
+}
+
+struct symbol* scope_lookup_current(const char* name) {
+    struct symbol* sym = NULL;
+    char* symbol_kind = NULL;
+
+    Node* head = Symbol_table_stack.head;
+    sym = hash_table_lookup(head->symbol_table, name);
+    if (sym) {
+        switch (sym->kind) {
+            case SYMBOL_LOCAL:
+                symbol_kind = "local";
+                break;
+            case SYMBOL_GLOBAL:
+                symbol_kind = "global";
+                break;
+            case SYMBOL_PARAM:
+                symbol_kind = "param";
+                break;
+        }
+        return sym;
     }
 
     return NULL;

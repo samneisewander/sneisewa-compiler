@@ -34,7 +34,7 @@ void scope_exit();
  *
  * Before calling this method for the first time, the user is expected to initialize the symbol table stack by entering a scope calling scope_enter(SCOPE_GLOBAL).
  *
- * This method is responsible for reporting multiple definitions of a name in the same scope. If this occurs, the new definition is discarded and the existing definition remains bound to the name.
+ * This method is NOT responsible for handling illegal duplicate definitions of a name in the same scope. The caller should unsure that the name and symbol may be legally bound BEFORE calling.
  * */
 void scope_bind(const char* name, struct symbol* s);
 
@@ -46,7 +46,7 @@ struct symbol* scope_lookup(const char* name);
 /**
  * Works like scope_lookup except that it only searches the topmost table. This is used to determine whether a symbol has already been defined in the current scope.
  */
-// struct symbol* scope_lookup_current(const char* name);
+struct symbol* scope_lookup_current(const char* name);
 
 /**
  * Returns the depth of the symbol table stack.

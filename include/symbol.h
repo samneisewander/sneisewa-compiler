@@ -2,6 +2,8 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
+#include <stdbool.h>
+
 #include "type.h"
 
 typedef enum {
@@ -12,6 +14,7 @@ typedef enum {
 
 struct symbol {
     symbol_t kind;
+    bool func_defined;
     struct type* type;
     char* name;
     int which;
