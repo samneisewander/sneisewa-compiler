@@ -1,0 +1,6 @@
+// Duplicate params
+add: function integer (x: integer, x: integer);
+
+add: function integer (x: integer, x: integer) = {
+    return x + x;
+}

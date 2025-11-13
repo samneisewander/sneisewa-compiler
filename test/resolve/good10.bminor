@@ -1,0 +1,6 @@
+// Identical function prototypes
+add: function integer (x: integer, y: integer);
+add: function integer (x: integer, y: integer);
+add: function integer (x: integer, y: integer) = {
+    print x + y;
+}

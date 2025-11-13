@@ -1,0 +1,8 @@
+// duplicate function definitions
+add: function integer (x: integer, y: integer);
+add: function integer (x: integer, y: integer) = {
+    print x * y;
+}
+add: function integer (x: integer, y: integer) = {
+    print x + y;
+}
