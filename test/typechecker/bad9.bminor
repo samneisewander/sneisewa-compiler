@@ -1,0 +1,11 @@
+// printing other bad types
+
+funct: function void () = {
+    return;
+}
+
+main: function void () = {
+    x: auto;
+
+    print x;
+}

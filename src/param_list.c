@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "error.h"
 #include "scope.h"
@@ -18,17 +19,17 @@ struct param_list* param_list_create(char* name, struct type* type, struct param
     return p;
 }
 
-void param_list_print(struct param_list* a) {
+void param_list_print(struct param_list* a, FILE* fp) {
     if (!a) {
         return;
     }
 
     printf("%s: ", a->name);
-    type_print(a->type);
+    type_print(a->type, fp);
 
     if (a->next) {
         printf(", ");
-        param_list_print(a->next);
+        param_list_print(a->next, fp);
     } else {
         return;
     }
@@ -43,4 +44,19 @@ void param_list_resolve(struct param_list* a) {
         scope_bind(a->name, symbol_create(SYMBOL_PARAM, a->type, a->name));
     }
     param_list_resolve(a->next);
+}
+
+void param_list_delete(struct param_list* a) {
+    if (!a) return;
+
+    struct param_list* curr = a;
+    struct param_list* next = curr->next;
+
+    while (next) {
+        free(curr->name);
+        type_delete(curr->type);
+        free(curr);
+        curr = next;
+        next = next->next;
+    }
 }

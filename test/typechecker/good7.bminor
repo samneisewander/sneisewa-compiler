@@ -1,0 +1,7 @@
+// autoamatic arrays
+
+main: function void() = {
+    p: array [3] auto;
+    p[1] = 5;
+    p[1] = 7;
+}

@@ -1,0 +1,9 @@
+// Void, auto, function in print statement
+
+main: function void() = {
+    x: void;
+    y: auto;
+    a: integer = 5;
+
+    print 5, x, y, main;
+}

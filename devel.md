@@ -2,6 +2,17 @@
 
 ## Assignment Questions
 
+### Typechecker
+
+> What AI tools (if any) did you use, and what sort of prompts did you provide?
+Didn't use AI.
+
+> What parts of the code were easy to get right?
+The general structure and debugging were generally easy to get right. No one thing was super hard, it was just that there were a lot of edge cases to consider.
+
+> What parts were difficult to get right and required more effort?
+Finding all of the ways to infer an automatic type was very difficult. Also, wrangling multidimensional arrays (especially ones with auto) was very hard. Also, I had to rewrite a significant portion of my grammar to semantically differentiate between argument lists and array initializers. 
+
 ### Resolver
 
 > What AI tools (if any) did you use, and what sort of prompts did you provide?

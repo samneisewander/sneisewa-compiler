@@ -1,0 +1,20 @@
+// Arrays
+
+// Subtypes
+a: array [5] boolean = {1, 2, 3, 4, 5};
+
+// dimensions
+b: array [2] array [2] integer = {{1, 2}, {3}};
+c: array [2] carray [3] integer = {{1, 2}, {4, 3}};
+
+// No expressions in global scope
+e: array [a + b] integer = {1, 2, 3};
+
+f: integer = 3;
+g: integer = 4;
+h: array [3] integer = {f + g, 2, 3};
+
+// No initializer in local Arrays
+main: function void() = {
+    i: array [1 + 2] integer = {1, 2, 3};
+}

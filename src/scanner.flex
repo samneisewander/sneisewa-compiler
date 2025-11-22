@@ -97,7 +97,7 @@ while    							{ return TOKEN_KEY_WHILE; }
 
 ({LETTER}|_)({ALPHANUM}|_){0,254} 	{ 
 
-    yylval.identifier = strdup(yytext);
+    yylval.identifier = strndup(yytext, 255);
 
     return TOKEN_IDENTIFIER; 
 }

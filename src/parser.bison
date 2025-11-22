@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "decl.h"
 #include "expr.h"
@@ -112,68 +113,47 @@ struct decl *program_ast;
 * Associates the semantic values of all rule reductions in the grammar 
 * with node types in the abstract syntax tree. 
 */
-%type <decl> program decl decl.func decl.func.list decl.atomic decl.array func
+%type <decl> program decl decl.list 
 %type <stmt> stmt stmt.if.complex stmt.if.simple stmt.other stmt.for.complex stmt.for.simple stmt.list stmt.list.opt func.def func.def_or_semi
-%type <expr> expr expr.1 expr.2 expr.3 expr.4 expr.5 expr.6 expr.7 expr.8 expr.9 expr.10 decl.array.init decl.atomic.init expr.function expr.list expr.list.item expr.array.init expr.array.init.item expr.list.opt expr.opt expr.subscript.opt
-%type <type> types.atomic types.func.params types.array.key types.array types.return types.array.member
+%type <expr> expr expr.1 expr.2 expr.3 expr.4 expr.5 expr.6 expr.7 expr.8 expr.9 expr.10 expr.function arg.list arg.list.item array.init array.init.item arg.list.opt expr.opt expr.subscript.opt decl.init array.list array.list.item
+%type <type> types.atomic types.array.key types.array types.return types.array.member types.decl
 %type <params> func.params func.params.list func.params.list.opt
+%type <name> expr.ident
 
 %%
 
-program : decl.func.list { program_ast = $$ = $1;}
+program : decl.list { program_ast = $$ = $1;}
         ;
 
 // ----- DECLARATIONS -----
 
-decl            : decl.array	
-				  { $$ = $1; }
-                | decl.atomic	
-				  { $$ = $1; }
+// you should allow any atomic or array type to be assigned any kind of thing...
+decl            : expr.ident TOKEN_COLON types.decl decl.init TOKEN_SEMICOLON      
+				  { $$ = decl_create($1, $3, $4, 0, 0); }
+				| expr.ident TOKEN_COLON TOKEN_KEY_FUNCTION types.return TOKEN_LPAREN func.params.list TOKEN_RPAREN func.def_or_semi
+		  		  { $$ = decl_create($1, type_create(TYPE_FUNCTION, $4, $6, 0), 0, $8, 0); }
                 ;
 
-decl.func       : decl			
-				  { $$ = $1; }
-                | func			
-				  { $$ = $1; }
-                ;
-
-decl.func.list  : %empty						
+decl.list  		: %empty						
 				  { $$ = 0; }
-                | decl.func decl.func.list		
+                | decl decl.list		
 				  { $$ = $1; $1->next = $2; }
                 ;
 
-decl.atomic     : TOKEN_IDENTIFIER TOKEN_COLON types.func.params decl.atomic.init TOKEN_SEMICOLON
-				  { $$ = decl_create($1, $3, $4, 0, 0); }
-				;
-
-decl.array      : TOKEN_IDENTIFIER TOKEN_COLON types.array decl.array.init TOKEN_SEMICOLON      
-				  { $$ = decl_create($1, $3, $4, 0, 0); }
-                ;
-
 // From the spec: (of a decl) If no initializing value is given, default is zero
-decl.array.init : %empty
-				  { $$ = 0; }
-                | TOKEN_ASSIGNMENT TOKEN_LCURLY expr.array.init TOKEN_RCURLY
-				  { $$ = expr_create(EXPR_ARRAY_INIT, $3, 0); }
-                ;
+decl.init	: %empty
+			  { $$ = 0; }
+			| TOKEN_ASSIGNMENT TOKEN_LCURLY array.init TOKEN_RCURLY
+			  { $$ = expr_create(EXPR_ARRAY_INIT, $3, 0); }
+			| TOKEN_ASSIGNMENT expr
+			  { $$ = $2; }
+			;
 
-decl.atomic.init: %empty
-				  { $$ = 0; }
-                | TOKEN_ASSIGNMENT expr
-				  { $$ = $2; }
-                ;
 
 // ----- FUNCTIONS -----
 
-func            	: TOKEN_IDENTIFIER TOKEN_COLON TOKEN_KEY_FUNCTION types.return TOKEN_LPAREN func.params.list TOKEN_RPAREN func.def_or_semi
-		  			  { $$ = decl_create($1, type_create(TYPE_FUNCTION, $4, $6, 0), 0, $8, 0); }
-                	;
-
 func.def        	: %empty
 		  			  { $$ = 0; }
-                	| decl func.def
-		  			  { $$ = stmt_create(STMT_DECL, $1, 0, 0, 0, 0, 0, $2); }
                 	| stmt func.def
 		  			  { $1->next = $2; $$ = $1; }
                 	;
@@ -186,8 +166,7 @@ func.def_or_semi	: TOKEN_SEMICOLON
 
 func.params.list	: %empty
 					  { $$ = 0; }
-					|  
-					  func.params func.params.list.opt
+					| func.params func.params.list.opt
 		  			  { $1->next = $2; $$ = $1; }
                 	;
 
@@ -197,9 +176,9 @@ func.params.list.opt: %empty
 		  			  { $2->next = $3; $$ = $2; }
         			;
                         
-func.params     	: TOKEN_IDENTIFIER TOKEN_COLON types.array
+func.params     	: expr.ident TOKEN_COLON types.array
 		  			  { $$ = param_list_create($1, $3, 0); }
-					| TOKEN_IDENTIFIER TOKEN_COLON types.func.params
+					| expr.ident TOKEN_COLON types.atomic
 		  			  { $$ = param_list_create($1, $3, 0); }
 					;
 
@@ -238,7 +217,7 @@ stmt.other      : expr TOKEN_SEMICOLON
 				  { $$ = stmt_create(STMT_EXPR, 0, 0, $1, 0, 0, 0, 0); }
                 | TOKEN_LCURLY stmt.list.opt TOKEN_RCURLY
 				  { $$ = stmt_create(STMT_BLOCK, 0, 0, 0, 0, $2, 0, 0); }
-                | TOKEN_KEY_PRINT expr.list.opt TOKEN_SEMICOLON
+                | TOKEN_KEY_PRINT arg.list.opt TOKEN_SEMICOLON
 				  { $$ = stmt_create(STMT_PRINT, 0, 0, $2, 0, 0, 0, 0); }
                 | TOKEN_KEY_RETURN expr.opt TOKEN_SEMICOLON
 				  { $$ = stmt_create(STMT_RETURN, 0, 0, $2, 0, 0, 0, 0); }
@@ -347,11 +326,11 @@ expr.9  : expr.9 TOKEN_POSTFIX_INCREMENT
 
 expr.10 : TOKEN_LPAREN expr TOKEN_RPAREN
 		  { $$ = $2; }
-		| TOKEN_IDENTIFIER 
-		  { $$ = expr_create_name(yylval.identifier); }
+		| expr.ident 
+		  { $$ = expr_create_name($1); }
         | expr.subscript.opt
 		  { $$ = $1; }
-        | TOKEN_IDENTIFIER expr.function
+        | expr.ident expr.function
 		  { $$ = expr_create(EXPR_CALL, expr_create_name($1), $2); }
         | TOKEN_INTEGER_LITERAL
 		  { $$ = expr_create_integer_literal(yylval.int_literal); }
@@ -373,40 +352,56 @@ expr.10 : TOKEN_LPAREN expr TOKEN_RPAREN
 		  { $$ = expr_create_string_literal(yylval.string_literal); }
         ;
 
-expr.subscript.opt		: TOKEN_IDENTIFIER TOKEN_LBRACKET expr TOKEN_RBRACKET
+expr.ident 	: TOKEN_IDENTIFIER
+			  { $$ = strdup(yylval.identifier); free(yylval.identifier); }
+			;
+
+expr.subscript.opt		: expr.ident TOKEN_LBRACKET expr TOKEN_RBRACKET
 						  { $$ = expr_create(EXPR_SUBSCRIPT, expr_create_name($1), $3); }
 						| expr.subscript.opt TOKEN_LBRACKET expr TOKEN_RBRACKET
 						  { $$ = expr_create(EXPR_SUBSCRIPT, $1, $3); }
 						;
 
-expr.function   		: TOKEN_LPAREN expr.list.opt TOKEN_RPAREN
+expr.function   		: TOKEN_LPAREN arg.list.opt TOKEN_RPAREN
 		  				  { $$ = $2; }
                 		;
 
-expr.list.opt   		: %empty
+// Linked list for function arguments and print statements.
+arg.list.opt   			: %empty
 		  				  { $$ = 0; }
-                		| expr.list
+                		| arg.list
 		  				  { $$ = $1; }
 
-expr.list       		: expr expr.list.item
+arg.list       			: expr arg.list.item
 		  				  { $$ = expr_create(EXPR_ARG, $1, $2); }
                 		;
 
-expr.list.item  		: %empty
+arg.list.item  			: %empty
 		  				  { $$ = 0; }
-                		| TOKEN_COMMA expr.list
+                		| TOKEN_COMMA arg.list
 		  				  { $$ = $2; }
                 		;
 
-expr.array.init     	: expr.list
-		  				  { $$ = $1; }
-                        | TOKEN_LCURLY expr.array.init TOKEN_RCURLY expr.array.init.item
-		  				  { $$ = expr_create(EXPR_ARG, $2, $4); }
+// Linked list of array elements (has the whack ass recursive stuff, and different expr kind)
+array.init     			: expr array.list.item
+		  				  { $$ = expr_create(EXPR_ARRAY_ELEM, $1, $2); }
+                        | TOKEN_LCURLY array.init TOKEN_RCURLY array.init.item
+		  				  { $$ = expr_create(EXPR_ARRAY_INIT, $2, $4); }
                         ;
 
-expr.array.init.item	: %empty
+array.list       		: expr array.list.item
+		  				  { $$ = expr_create(EXPR_ARRAY_ELEM, $1, $2); }
+                		;
+
+array.list.item  		: %empty
 		  				  { $$ = 0; }
-                        | TOKEN_COMMA expr.array.init
+                		| TOKEN_COMMA array.list
+		  				  { $$ = $2; }
+                		;
+
+array.init.item			: %empty
+		  				  { $$ = 0; }
+                        | TOKEN_COMMA array.init
 		  				  { $$ = $2; }
 						;
 
@@ -427,40 +422,36 @@ types.atomic    		: TOKEN_KEY_BOOLEAN
 						  { $$ = type_create(TYPE_INTEGER, 0, 0, 0); }
                 		| TOKEN_KEY_STRING
 						  { $$ = type_create(TYPE_STRING, 0, 0, 0); }
-                		;
-
-types.func.params       : types.atomic
-				  		  { $$ = $1; }
-                        | TOKEN_KEY_AUTO
+						| TOKEN_KEY_AUTO
 						  { $$ = type_create(TYPE_AUTO, 0, 0, 0); }
-                        ;
+                		;
 
 types.array.key 		: TOKEN_KEY_CARRAY
 						  { $$ = type_create(TYPE_CARRAY, 0, 0, 0); }
                 		| TOKEN_KEY_ARRAY
 						  { $$ = type_create(TYPE_ARRAY, 0, 0, 0); }
-                		| TOKEN_KEY_AUTO
-						  { $$ = type_create(TYPE_AUTO, 0, 0, 0); }
                 		;
 
 types.array     		: types.array.key TOKEN_LBRACKET expr TOKEN_RBRACKET types.array.member
 						  { $1->subtype = $5; $1->array_size = $3; $$ = $1; }
                 		;
 
+types.decl				: types.array
+						  { $$ = $1; }
+						| types.atomic
+						  { $$ = $1; }
+						;
+
 types.return    		: types.atomic
 						  { $$ = $1; }
                 		| TOKEN_KEY_VOID
 						  { $$ = type_create(TYPE_VOID, 0, 0, 0); }
-                		| TOKEN_KEY_AUTO
-						  { $$ = type_create(TYPE_AUTO, 0, 0, 0); }
                 		;
 
 types.array.member      : types.atomic
 				  		  { $$ = $1; }
                         | types.array
 				  		  { $$ = $1; }
-                        | TOKEN_KEY_AUTO
-				  		  { $$ = type_create(TYPE_AUTO, 0, 0, 0); }
                         ;
 
 %%

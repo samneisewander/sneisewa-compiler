@@ -1,0 +1,6 @@
+// Non-constant global initializers
+
+x: integer = 5;
+y: integer = 10;
+
+a: integer = x + y;

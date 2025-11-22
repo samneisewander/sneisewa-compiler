@@ -1,0 +1,11 @@
+// assigning auto to auto
+
+main: function void() = {
+    x: auto;
+    y: auto;
+    z: integer = 5;
+
+    x = y;
+    z = x;
+
+}

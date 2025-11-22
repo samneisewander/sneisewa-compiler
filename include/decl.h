@@ -9,7 +9,7 @@
 #include "type.h"
 
 /**
- * The Abstract Syntax Tree node kind for a declaration
+ * The Abstract Syntax Tree node kind for a declaration.
  */
 struct decl {
     char* name;
@@ -45,5 +45,10 @@ void decl_print(struct decl* d, int indent);
  * @param d decl on which to perform name resolution.
  */
 void decl_resolve(struct decl* d);
+
+/**
+ * Walks a linked list of declarations and confirms that variable declarations match their initializers and otherwise typechecks the body of function declarations.
+ */
+void decl_typecheck(struct decl* d);
 
 #endif

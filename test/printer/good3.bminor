@@ -10,6 +10,4 @@ b: array [2] boolean;
 
 b: array [2 + 4] boolean;
 
-b: auto [2 + 4] auto [10] boolean;
-
 b: integer = myfunct();

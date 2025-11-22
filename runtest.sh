@@ -111,3 +111,24 @@ do
 		echo -e "$testfile failure ${GREEN}(as expected)${RESET}"
 	fi
 done
+
+# Typechecker
+for testfile in test/typechecker/good*.bminor
+do
+	if ./bin/bminor --typecheck $testfile &> $testfile.out
+	then
+		echo -e "$testfile success ${GREEN}(as expected)${RESET}"
+	else
+		echo -e "$testfile failure ${RED}(INCORRECT)${RESET}"
+	fi
+done
+
+for testfile in test/typechecker/bad*.bminor
+do
+	if ./bin/bminor --typecheck $testfile &> $testfile.out
+	then
+		echo -e "$testfile success ${RED}(INCORRECT)${RESET}"
+	else
+		echo -e "$testfile failure ${GREEN}(as expected)${RESET}"
+	fi
+done

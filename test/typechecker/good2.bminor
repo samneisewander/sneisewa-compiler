@@ -1,0 +1,7 @@
+// Arrays
+
+arr1: array [2] array [2] integer = {{1, 2}, {4, 3}};
+arr2: array [2] carray [2] integer = {{1, 2}, {4, 3}};
+arr3: carray [3] integer = {1, 2, 3};
+arr4: carray [3] integer = {1, 2, 3};
+

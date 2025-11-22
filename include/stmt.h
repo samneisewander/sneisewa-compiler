@@ -32,6 +32,7 @@ struct stmt {
     struct stmt* body;
     struct stmt* else_body;
     struct stmt* next;
+    struct symbol* parent_func;
 };
 
 struct stmt* stmt_create(stmt_t kind, struct decl* decl, struct expr* init_expr, struct expr* expr, struct expr* next_expr, struct stmt* body, struct stmt* else_body, struct stmt* next);
@@ -42,5 +43,12 @@ void stmt_print(struct stmt* s, int indent);
  * Calls the appropriate resolve on each of its sub-components. In the case of a STMT BLOCK, it also enters and leaves a new scope.
  */
 void stmt_resolve(struct stmt* s);
+
+/**
+ * Evaluates each of a statement's components, and then verifies that types match where needed.
+ *
+ * @param prototype The symbol structure of the function this statement appears inside of.
+ */
+void stmt_typecheck(struct stmt* s, struct symbol* prototype);
 
 #endif

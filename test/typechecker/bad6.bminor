@@ -1,0 +1,8 @@
+// function auto nonsense, bad function call
+funct: function auto (x: auto) = {
+    return x;
+}
+
+main: function void () = {
+    funct();
+}

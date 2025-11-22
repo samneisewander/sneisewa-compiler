@@ -1,5 +1,5 @@
 // Auto type
 a: auto = 15;
 b: auto = "hello world";
-c: auto [2 + 4] auto [10] boolean;
+c: auto = {1, 2, 3, 4, 5};
 d: function auto (x: auto, y: auto);

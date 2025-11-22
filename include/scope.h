@@ -53,4 +53,9 @@ struct symbol* scope_lookup_current(const char* name);
  */
 int scope_level();
 
+/**
+ * Sets a global flag that determines whether name resolutions are printed to stdout or not. Default is false. This piece of global state is used in scope_lookup.
+ */
+void set_print_resolutions(bool b);
+
 #endif

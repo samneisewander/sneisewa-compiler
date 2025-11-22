@@ -186,6 +186,22 @@ int main(int argc, char* argv[]) {
             scope_enter(SCOPE_GLOBAL);
             decl_resolve(program_ast);
             return check_error() ? EXIT_FAILURE : EXIT_SUCCESS;
+        } else if (strcmp(argv[i], "--typecheck") == 0) {
+            yyin = fopen(argv[++i], "r");
+            if (!yyin) {
+                fprintf(stderr, "Could not open file %s\n", argv[i]);
+                return EXIT_FAILURE;
+            }
+
+            if (yyparse() != 0) {
+                return EXIT_FAILURE;
+            }
+
+            scope_enter(SCOPE_GLOBAL);
+            decl_resolve(program_ast);
+            decl_typecheck(program_ast);
+
+            return check_error() ? EXIT_FAILURE : EXIT_SUCCESS;
         }
     }
 }

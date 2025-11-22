@@ -1,0 +1,9 @@
+// print function names
+
+funct: function auto (x: auto) = {
+    return x;
+}
+
+main: function void () = {
+    print funct;
+}

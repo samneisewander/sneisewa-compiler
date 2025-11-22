@@ -1,0 +1,26 @@
+// Arithmetic Expressions
+a: integer = 1;
+b: integer = 2;
+x: double = 3.0;
+y: double = 4.0;
+
+main: function void () = {
+    i: integer; 
+    j: double;
+
+    // Allowed operators for integers
+    i = a + b;
+    i = a - b;
+    i = a * b;
+    i = a / b;
+
+    i = a % b;
+    i = a ^ b;
+    i = a++;
+    i = a--;
+    i = a--;
+
+    p: array [3] integer;
+    p[1] = 5;
+    //p[1]++;
+}

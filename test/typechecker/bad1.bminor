@@ -1,0 +1,7 @@
+// Initializing with incorrect values
+
+a: integer = 5.0;
+b: boolean = 5.0;
+c: char = 0;
+d: double = 5;
+e: string = 4;

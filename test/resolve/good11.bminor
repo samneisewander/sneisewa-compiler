@@ -1,0 +1,2 @@
+arr1: auto = {1, 2, 3};
+arr2: array [3] auto = {1, 2, 3};

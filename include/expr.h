@@ -49,6 +49,7 @@ typedef enum {
     EXPR_SUBSCRIPT,
     EXPR_CALL,
     EXPR_ARG,
+    EXPR_ARRAY_ELEM,
     EXPR_ARRAY_INIT,
 
     EXPR_NAME,
@@ -66,33 +67,33 @@ struct expr {
     struct expr* right;
 
     /* used by various leaf exprs */
-    const char* name;
+    char* name;
     int64_t int_literal;
     bool bool_literal;
     double double_literal;
     char char_literal;
-    const char* string_literal;
+    char* string_literal;
     struct symbol* symbol;
 };
 
 struct expr* expr_create(expr_t kind, struct expr* left, struct expr* right);
 
-struct expr* expr_create_name(const char* n);
+struct expr* expr_create_name(char* n);
 struct expr* expr_create_integer_literal(int64_t c);
 struct expr* expr_create_double_literal(double c);
 struct expr* expr_create_boolean_literal(bool c);
 struct expr* expr_create_char_literal(char c);
-struct expr* expr_create_string_literal(const char* str);
+struct expr* expr_create_string_literal(char* str);
 
 /**
  * Pretty prints an expr, removing unnecessary whitespace or parentheses while preserving the structure of the AST. If expr is null, does nothing.
  */
-void expr_print(struct expr* e);
+void expr_print(struct expr* e, FILE* fp);
 
 /**
  * Pretty prints expr e, wrapped in parentheses.
  */
-void expr_print_parens(struct expr* e);
+void expr_print_parens(struct expr* e, FILE* fp);
 
 /**
  * @brief Performs name resolution on an expression.
@@ -101,4 +102,20 @@ void expr_print_parens(struct expr* e);
  * @param d decl on which to perform name resolution.
  */
 void expr_resolve(struct expr* e);
+
+/**
+ * Recursively copies an expression `e` and returns the result. If `e` is `NULL`, returns `NULL`. Note that the symbol structure associated with `e` is reused.
+ */
+struct expr* expr_copy(struct expr* e);
+
+/**
+ * Recursively releases expression `e` and its members. If `e` is `NULL`, does nothing. Note that this does not release the symbol structure associated with `e`.
+ */
+void expr_delete(struct expr* e);
+
+/**
+ * If called on a non-null expr, will always return a newly-allocated type structure.
+ */
+struct type* expr_typecheck(struct expr* e);
+
 #endif
