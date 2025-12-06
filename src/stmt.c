@@ -236,12 +236,21 @@ void stmt_typecheck(struct stmt* s, struct symbol* prototype) {
             if (!t) {
                 t = type_create(TYPE_VOID, 0, 0, 0);
             }
-            if (!type_equals(t, prototype->type->subtype)) {
-                fprintf(stderr, "typecheck error: return type of function %s is %s, instead got type %s (", prototype->name, ttos(prototype->type->subtype), ttos(t));
-                expr_print(s->expr, stderr);
-                fprintf(stderr, ")\n");
-                set_error(true);
+
+            /* Prevent returning auto if function return type is auto. Otherwise, infer return value type from function prototype. */
+            if (prototype->type->subtype->kind == TYPE_AUTO) {
+                if (t->kind == TYPE_AUTO) {
+                    fprintf(stderr, "typecheck error: cannot return type auto (");
+                    expr_print(s->expr, stderr);
+                    fprintf(stderr, ") from automatically typed function (%s)\n", prototype->name);
+                    set_error(true);
+                    break;
+                }
+                /* Infer function return type from return type. */
+                type_delete(prototype->type->subtype);
+                prototype->type->subtype = type_copy(t);
             }
+
             switch (t->kind) {
                 case TYPE_ARRAY:
                 case TYPE_CARRAY:
@@ -249,10 +258,23 @@ void stmt_typecheck(struct stmt* s, struct symbol* prototype) {
                     fprintf(stderr, "typecheck error: cannot return type %s from function (%s)\n", ttos(t), prototype->name);
                     set_error(true);
                     break;
+                case TYPE_AUTO:
+                    // Infer return expression type from function prototype
+                    type_delete(t);
+                    t = type_copy(prototype->type->subtype);
+                    break;
                 default:
                     // Shoo, gcc warnings!
                     break;
             }
+
+            if (!type_equals(t, prototype->type->subtype)) {
+                fprintf(stderr, "typecheck error: return type of function %s is %s, instead got type %s (", prototype->name, ttos(prototype->type->subtype), ttos(t));
+                expr_print(s->expr, stderr);
+                fprintf(stderr, ")\n");
+                set_error(true);
+            }
+
             type_delete(t);
             break;
         case STMT_BLOCK:

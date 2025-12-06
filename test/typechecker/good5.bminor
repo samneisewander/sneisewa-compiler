@@ -1,23 +1,7 @@
-// Arithmetic Expressions
-a: integer = 1;
-b: integer = 2;
-x: double = 3.0;
-y: double = 4.0;
+arr: array [5] integer = {1, 2, 3, 4, 5};
 
-main: function void () = {
-    i: integer; 
-    j: double;
-
-    // Allowed operators for doubles
-    j = x + y;
-    j = x - y;
-    j = x * y;
-    j = x / y;
-    
-    j = x % y;
-    j = x ^ y;
-    j = x++;
-    j = x--;
-    j = x--;
-
+main: function integer () = {
+    x: auto = arr[2];  // Should infer integer
+    y: integer = x + 10;
+    return 0;
 }

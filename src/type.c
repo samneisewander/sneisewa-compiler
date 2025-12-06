@@ -91,7 +91,7 @@ bool type_equals(struct type* a, struct type* b) {
         } else if (a->kind < TYPE_FUNCTION && b->kind < TYPE_FUNCTION) {
             /* Case: A and B both arrays, so check that subtypes match */
             if (type_equals(a->subtype, b->subtype)) {
-                if (a->array_size->kind == EXPR_INT && b->array_size->kind == EXPR_INT) {
+                if (a->array_size && b->array_size && a->array_size->kind == EXPR_INT && b->array_size->kind == EXPR_INT) {
                     // Arrays both have constant length; can check lengths equal at compile time.
                     return a->array_size->int_literal == b->array_size->int_literal;
                 } else {

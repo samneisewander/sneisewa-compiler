@@ -1,13 +1,18 @@
-// autoamatic arrays
+// TEST: auto_function_return_inference.bminor
+// EXPECTED: SUCCESS
+get_value: function integer () = {
+    return 42;
+}
 
-main: function void() = {
-    p: array [3] auto;
-    p[1] = 5;
-    p[1] = 7;
-    p[1] = 7 + 4;
-    p[1] = 7 % 1;
-    p[1] = 7;
-    p[1] = 7;
-    p[1] = 7;
-    p[1] = 7;
+get_flag: function boolean () = {
+    return true;
+}
+
+main: function integer () = {
+    x: auto = get_value();  // Infers integer
+    y: auto = get_flag();   // Infers boolean
+    
+    z: integer = x + 10;    // Valid
+    w: boolean = y && false; // Valid
+    return 0;
 }

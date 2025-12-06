@@ -116,7 +116,7 @@ struct decl *program_ast;
 %type <decl> program decl decl.list 
 %type <stmt> stmt stmt.if.complex stmt.if.simple stmt.other stmt.for.complex stmt.for.simple stmt.list stmt.list.opt func.def func.def_or_semi
 %type <expr> expr expr.1 expr.2 expr.3 expr.4 expr.5 expr.6 expr.7 expr.8 expr.9 expr.10 expr.function arg.list arg.list.item array.init array.init.item arg.list.opt expr.opt expr.subscript.opt decl.init array.list array.list.item
-%type <type> types.atomic types.array.key types.array types.return types.array.member types.decl
+%type <type> types.atomic types.array.key types.array types.array.param types.return types.array.member types.decl types.array.param.member
 %type <params> func.params func.params.list func.params.list.opt
 %type <name> expr.ident
 
@@ -176,7 +176,7 @@ func.params.list.opt: %empty
 		  			  { $2->next = $3; $$ = $2; }
         			;
                         
-func.params     	: expr.ident TOKEN_COLON types.array
+func.params     	: expr.ident TOKEN_COLON types.array.param
 		  			  { $$ = param_list_create($1, $3, 0); }
 					| expr.ident TOKEN_COLON types.atomic
 		  			  { $$ = param_list_create($1, $3, 0); }
@@ -436,6 +436,10 @@ types.array     		: types.array.key TOKEN_LBRACKET expr TOKEN_RBRACKET types.arr
 						  { $1->subtype = $5; $1->array_size = $3; $$ = $1; }
                 		;
 
+types.array.param     		: types.array.key TOKEN_LBRACKET TOKEN_RBRACKET types.array.param.member
+						  { $1->subtype = $4; $$ = $1; }
+                		;
+
 types.decl				: types.array
 						  { $$ = $1; }
 						| types.atomic
@@ -453,6 +457,12 @@ types.array.member      : types.atomic
                         | types.array
 				  		  { $$ = $1; }
                         ;
+
+types.array.param.member: types.atomic
+				  		  { $$ = $1; }
+                        | types.array.param
+				  		  { $$ = $1; }
+                        ;						
 
 %%
 

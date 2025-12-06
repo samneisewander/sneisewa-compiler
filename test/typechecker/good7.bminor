@@ -1,7 +1,13 @@
-// autoamatic arrays
-
-main: function void() = {
-    p: array [3] auto;
-    p[1] = 5;
-    p[1] = 7;
+// TEST: shadow_with_auto.bminor
+// EXPECTED: SUCCESS or ERROR depending on scoping rules
+main: function integer () = {
+    x: auto = 42;        // integer
+    {
+        x: auto = true;  // boolean - shadows outer x
+        if (x) {
+            print "inner x is true";
+        }
+    }
+    y: integer = x + 10;  // Should use outer x (integer)
+    return 0;
 }

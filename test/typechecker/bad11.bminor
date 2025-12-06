@@ -1,0 +1,14 @@
+// Auto in function parameter
+
+// TODO: Allow subtype of global array to be inferred from initializer.
+x: array [5] auto = {1, 2, 3, 4, 5};
+
+myfunct: function integer (x: array [] auto) = {
+    return x[1];
+}
+
+main: function void() = {
+    myfunct(x);
+}
+
+

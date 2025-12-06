@@ -1,0 +1,12 @@
+// Auto in function parameter
+
+myfunct: function auto (x: auto) = {
+    return x;
+}
+
+main: function void() = {
+    x: auto;
+    myfunct(x);
+}
+
+

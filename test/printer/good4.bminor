@@ -12,6 +12,6 @@ h: function integer ( x: auto, y: auto ) = {
 	return;
 }
 
-i: function integer ( x: array [5] integer, y: array [5] array [5] integer ) = {
+i: function integer ( x: array [] integer, y: array [] array [] integer ) = {
 	return;
 }

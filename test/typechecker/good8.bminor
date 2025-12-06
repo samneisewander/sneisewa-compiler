@@ -1,7 +1,7 @@
-// Arrays
-
-arr1: array [2] array [2] integer = {{1, 2}, {4, 3}};
-arr2: array [2] carray [2] integer = {{1, 2}, {4, 3}};
-arr3: carray [3] integer = {1, 2, 3};
-arr4: carray [3] integer = {1, 2, 3};
-
+// TEST: auto_array_initializer_inference.bminor
+// EXPECTED: ERROR or SUCCESS depending on implementation
+data: array [3] auto = {1, 2, 3};  // auto for element type?
+main: function integer () = {
+    // Can auto infer the element type from array literal?
+    return 0;
+}

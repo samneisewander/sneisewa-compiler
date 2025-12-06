@@ -61,6 +61,7 @@ void decl_resolve(struct decl* d) {
 
     if (!binding) {
         /* Case 1: (LEGAL) this name has never been bound. */
+        scope_bind(d->name, d->symbol);
         if (d->code) {
             d->symbol->func_defined = true;
             scope_enter(SCOPE_FUNCTION);
@@ -70,7 +71,6 @@ void decl_resolve(struct decl* d) {
             scope_exit();
             scope_exit();
         }
-        scope_bind(d->name, d->symbol);
     } else {
         if (d->type->kind == TYPE_FUNCTION && binding->type->kind == TYPE_FUNCTION) {
             if (binding->func_defined) {
@@ -123,8 +123,6 @@ void decl_resolve(struct decl* d) {
 void decl_typecheck(struct decl* d) {
     if (!d) return;
 
-    // TODO: Prevent functions from having AUTO in prototype
-
     /**
      * The following “oddities” should be flagged as errors, even though it is possible to express them syntactically:
      * Functions that return arrays or other functions.
@@ -135,7 +133,7 @@ void decl_typecheck(struct decl* d) {
      */
 
     if (d->symbol->kind == SYMBOL_GLOBAL) {
-        // Prevent non-constant initializers for local variables
+        // Prevent non-constant initializers for global variables
         switch (d->type->kind) {
             case TYPE_ARRAY:
             case TYPE_CARRAY:
@@ -176,18 +174,36 @@ void decl_typecheck(struct decl* d) {
     }
 
     if (d->value) {
-        // TODO: Check for auto
         struct type* t = expr_typecheck(d->value);
-        // if (d->type->kind == TYPE_AUTO) {
-        //     d->type
-        // }
+
+        /**
+         * Infer type of symbol from initializing expression. Do not allow auto to be initialized with auto.
+         */
+        if (d->type->kind == TYPE_AUTO) {
+            if (t->kind == TYPE_AUTO) {
+                fprintf(stderr, "typecheck error: auto (%s) cannot be initialized with auto (", d->name);
+                expr_print(d->value, stderr);
+                fprintf(stderr, ")\n");
+                set_error(true);
+            } else if (t->kind == TYPE_VOID) {
+                fprintf(stderr, "typecheck error: auto (%s) cannot be initialized with void (", d->name);
+                expr_print(d->value, stderr);
+                fprintf(stderr, ")\n");
+                set_error(true);
+            } else {
+                type_delete(d->type);
+                d->type = type_copy(t);
+            }
+        }
 
         if (d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) {
             if (d->symbol->kind == SYMBOL_LOCAL) {
                 fprintf(stderr, "typecheck error: cannot initialize local array %s\n", d->name);
                 set_error(true);
-            }
-            if (!type_equals(t->subtype, d->symbol->type)) {
+            } else if (d->type->subtype->kind == TYPE_AUTO) {
+                type_delete(d->type->subtype);
+                d->type->subtype = type_copy(t);
+            } else if (!type_equals(t->subtype, d->symbol->type)) {
                 fprintf(stderr, "typecheck error: decl of type ");
                 type_print(d->type, stderr);
                 fprintf(stderr, " (%s) cannot be initialized with value of type ", d->symbol->name);
@@ -211,6 +227,21 @@ void decl_typecheck(struct decl* d) {
 
     if (d->code) {
         stmt_typecheck(d->code, d->symbol);
+        switch (d->type->subtype->kind) {
+            case TYPE_AUTO:
+                fprintf(stderr, "typecheck error: cannot infer type of automatically typed function (%s) since it has no return statement.\n", d->name);
+                set_error(true);
+                break;
+            case TYPE_ARRAY:
+            case TYPE_CARRAY:
+            case TYPE_FUNCTION:
+                fprintf(stderr, "typecheck error: cannot return %s type from function (%s).\n", ttos(d->type->subtype), d->name);
+                set_error(true);
+                break;
+            default:
+                // Shoo, gcc warnings!
+                break;
+        }
     }
 
     decl_typecheck(d->next);

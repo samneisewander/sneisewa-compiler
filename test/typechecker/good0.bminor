@@ -14,7 +14,6 @@ main: function void () = {
     j = x * y;
     j = x / y;
     
-    j = x % y;
     j = x ^ y;
     j = x++;
     j = x--;

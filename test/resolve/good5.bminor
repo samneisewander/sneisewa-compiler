@@ -1,4 +1,4 @@
 // Other data types
-main: function void(arr: array [5] integer) = {
+main: function void(arr: array [] integer) = {
     print #arr;
 }

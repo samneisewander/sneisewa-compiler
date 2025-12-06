@@ -1,0 +1,15 @@
+// TEST: valid_auto_function.bminor
+// EXPECTED: SUCCESS
+add: function auto (a: integer, b: integer) = {
+    return a + b;  // infers integer return type
+}
+
+get_flag: function auto () = {
+    return true;   // infers boolean return type
+}
+
+main: function integer () = {
+    x: integer = add(5, 10);
+    y: boolean = get_flag();
+    return 0;
+}

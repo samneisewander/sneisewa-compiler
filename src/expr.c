@@ -443,6 +443,10 @@ struct type* expr_typecheck(struct expr* e) {
     struct type* rt = expr_typecheck(e->right);
     struct type* result;
 
+    struct param_list* param;
+    struct expr* arg;
+    struct type* arg_t;
+
     switch (e->kind) {
         case EXPR_ASSIGNMENT:
             /* AUTO CAN BE INFERRED HERE */
@@ -534,7 +538,7 @@ struct type* expr_typecheck(struct expr* e) {
                 expr_print(e->right, stderr);
                 fprintf(stderr, ")\n");
                 set_error(true);
-            } else if (lt->kind == TYPE_VOID || lt->kind == TYPE_ARRAY || lt->kind == TYPE_FUNCTION) {
+            } else if (lt->kind == TYPE_VOID || lt->kind == TYPE_ARRAY || lt->kind == TYPE_CARRAY || lt->kind == TYPE_FUNCTION) {
                 fprintf(stderr, "typecheck error: %s may not appear in comparison operation.\n", ttos(lt));
                 set_error(true);
             }
@@ -593,7 +597,7 @@ struct type* expr_typecheck(struct expr* e) {
             }
             break;
         case EXPR_REMAINDER:
-            if (type_equals(lt, rt) && (lt->kind == TYPE_INTEGER || lt->kind == TYPE_DOUBLE)) {
+            if (type_equals(lt, rt) && lt->kind == TYPE_INTEGER) {
                 result = type_copy(lt);
             } else {
                 fprintf(stderr, "typecheck error: cannot divide type %s (", ttos(lt));
@@ -643,7 +647,7 @@ struct type* expr_typecheck(struct expr* e) {
             }
             break;
         case EXPR_UNARY_ARRAY_LENGTH:
-            if (lt->kind == TYPE_CARRAY || lt->kind == TYPE_CARRAY) {
+            if (lt->kind == TYPE_ARRAY) {
                 result = type_create(TYPE_INTEGER, 0, 0, 0);
             } else {
                 fprintf(stderr, "typecheck error: cannot take the unary length of type %s (", ttos(lt));
@@ -692,23 +696,22 @@ struct type* expr_typecheck(struct expr* e) {
         case EXPR_CALL:
             /* AUTO CAN BE INFERRED HERE */
             // Walk the list of params and args, typecheck each one.
-            struct param_list* param = e->left->symbol->type->params;
-            struct expr* arg = e->right;
-            struct type* t;
+            param = e->left->symbol->type->params;
+            arg = e->right;
 
             while (param && arg) {
-                t = expr_typecheck(arg);
-                if (!type_equals(t, param->type)) {
+                arg_t = expr_typecheck(arg);
+                if (!type_equals(arg_t, param->type)) {
                     fprintf(stderr, "typecheck error: argument ");
                     expr_print(arg, stderr);
                     fprintf(stderr, "of type ");
-                    type_print(t, stderr);
+                    type_print(arg_t, stderr);
                     fprintf(stderr, "does not match prototype of function %s, which is expecting ", e->left->name);
                     type_print(param->type, stderr);
                     fprintf(stderr, "\n");
                     set_error(true);
                 }
-                type_delete(t);
+                type_delete(arg_t);
                 param = param->next;
                 arg = arg->right;
             }
@@ -770,7 +773,11 @@ struct type* expr_typecheck(struct expr* e) {
             }
             break;
         case EXPR_NAME:
-            result = type_copy(e->symbol->type);
+            if (e->symbol) {
+                result = type_copy(e->symbol->type);
+            } else {
+                result = type_create(TYPE_INTEGER, 0, 0, 0);
+            }
             break;
         case EXPR_INT:
             result = type_create(TYPE_INTEGER, 0, 0, 0);
