@@ -1,0 +1,17 @@
+// Locals
+
+main: function void () = {
+    a: integer = 0;
+    b: boolean = true;
+    c: string = "Hello world";
+    d: char = '\n';
+
+    e: integer;
+    f: boolean;
+    g: string;
+    h: char;
+
+    print a, ", ", b, ", ", c, d; 
+
+    return a;
+}

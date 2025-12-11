@@ -43,10 +43,15 @@ build:
 bin:
 	@mkdir -p bin
 
-test: all
+test: all test-codegen
 	@echo "Running tests..."
-	chmod +x runtest.sh
-	./runtest.sh
+	chmod +x test/utilities/runtest.sh
+	test/utilities/runtest.sh
+
+test-codegen: all
+	@echo "Testing codegen..."
+	chmod +x test/utilities/runcodegen.sh
+	test/utilities/runcodegen.sh
 
 clean:
 	@echo "Cleaning up..."
@@ -54,4 +59,9 @@ clean:
 	rm -rf bin
 	rm -f include/token.h
 	rm -f test/*/*.out test/*/*.pretty
+	rm -f test/codegen/non-linking/*.s
+	rm -f test/codegen/non-linking/*.out
+	rm -f test/codegen/linking/*.s
+	rm -f test/codegen/linking/*.out
+	rm -f test/codegen/linking/*.exe
 

@@ -1,0 +1,17 @@
+// Array subscript
+
+x: array [5] integer = {1, 2, 3, 4, 5};
+y: carray [5] integer = {1, 2, 3, 4, 5};
+
+main: function integer() = {
+    
+    print "Array: ", x[2], '\n';
+    print "Carray: ", y[2], '\n';
+
+    x[2] = 10;
+    y[2] = 10;
+
+    print (x[2] == 10) && (y[2] == 10), '\n';
+    
+    return 0;
+}

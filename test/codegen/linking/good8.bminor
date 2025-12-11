@@ -1,0 +1,14 @@
+// ADD
+
+main: function integer() = {
+
+    x: integer = 5;
+    y: integer = 5;
+
+    z: integer = x + y;
+
+    print z, '\n';
+
+    return 0;
+
+}

@@ -43,12 +43,18 @@ void decl_print(struct decl* d, int indent);
  *
  * Creates a new symbol, binding it to the name of the declaration in the current scope. If the declaration represents an expression (d->value is not null) then the expression is resolved. If the declaration represents a function (d->code is not null), creates a new scope and resolves the parameters and code.
  * @param d decl on which to perform name resolution.
+ * @param prototype a symbol structure representing the parent function prototype if d is a local declaration.
  */
-void decl_resolve(struct decl* d);
+void decl_resolve(struct decl* d, struct symbol* prototype);
 
 /**
  * Walks a linked list of declarations and confirms that variable declarations match their initializers and otherwise typechecks the body of function declarations.
  */
 void decl_typecheck(struct decl* d);
+
+/**
+ * Recursively enerates x86-64 assembly code for a list of declarations d, emitting instructions to outfile. If a code generation error occurs, the program exits.
+ */
+void decl_codegen(struct decl* d, FILE* outfile);
 
 #endif

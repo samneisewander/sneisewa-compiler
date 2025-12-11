@@ -1,0 +1,10 @@
+// MULT
+
+main: function integer() = {
+    x: integer = 5;
+    y: integer = 0;
+
+    print x * y, '\n';
+
+    return x * y;
+}

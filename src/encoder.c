@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 bool string_decode(const char* es, char* s) {
     if (es[0] == '\\') {
@@ -201,4 +202,11 @@ void string_encode(const char* s, char* es) {
 
     *(es++) = '"';  // ending quote
     *es = '\0';     // null terminator
+}
+
+void char_encode(char c, char* es) {
+    char decoded_string[2] = {c, 0};
+    string_encode(decoded_string, es);
+    es[0] = '\'';
+    es[strlen(es) - 1] = '\'';
 }

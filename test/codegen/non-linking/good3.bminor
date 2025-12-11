@@ -1,0 +1,12 @@
+// global Array
+
+a: array [5] boolean = {true, false, true, false, true};
+b: array [5] integer = {1, 2, 3, 4, 5};
+c: array [5] char = {'\n', '\r', 'a', '4', '5'};
+d: array [5] string = {"hi\n", "my\n", "nam\n", "is\n", "sam\n"};
+
+// uninitialized array
+i: array [5] boolean;
+j: array [5] integer;
+k: array [5] char;
+l: array [5] string;

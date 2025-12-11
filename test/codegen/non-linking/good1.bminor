@@ -1,0 +1,8 @@
+// Simple atomic types
+x: integer = 5;
+y: boolean = true;
+z: char = '\n';
+
+a: integer;
+b: boolean;
+c: char;

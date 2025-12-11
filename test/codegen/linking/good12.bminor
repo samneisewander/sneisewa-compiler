@@ -1,0 +1,10 @@
+// MOD
+
+main: function integer() = {
+    x: integer = 15;
+    y: integer = 5;
+
+    print y % x, '\n';
+
+    return x % y;
+}

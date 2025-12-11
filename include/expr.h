@@ -65,6 +65,7 @@ struct expr {
     expr_t kind;
     struct expr* left;
     struct expr* right;
+    int reg;  // The register holding the computed value of this expression.
 
     /* used by various leaf exprs */
     char* name;
@@ -117,5 +118,10 @@ void expr_delete(struct expr* e);
  * If called on a non-null expr, will always return a newly-allocated type structure.
  */
 struct type* expr_typecheck(struct expr* e);
+
+/**
+ * Perform a post-order traversal of the AST or DAG starting at e, and emit one or more instructions for each node.
+ */
+void expr_codegen(struct expr* e, FILE* outfile);
 
 #endif

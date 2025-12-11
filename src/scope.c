@@ -21,7 +21,7 @@ typedef struct {
 } Stack;
 
 Stack Symbol_table_stack = {.size = 0, .head = NULL};
-bool PrintResolutions = false;
+bool PrintResolutions = true;
 
 void scope_enter(scope_t scope_kind) {
     Node* n = (Node*)calloc(1, sizeof(*n));
@@ -79,25 +79,23 @@ void scope_bind(const char* name, struct symbol* s) {
 
 struct symbol* scope_lookup(const char* name) {
     struct symbol* sym = NULL;
-    char* symbol_kind = NULL;
 
     Node* head = Symbol_table_stack.head;
     while (head) {
         sym = hash_table_lookup(head->symbol_table, name);
         if (sym) {
-            switch (sym->kind) {
-                case SYMBOL_LOCAL:
-                    symbol_kind = "local";
-                    break;
-                case SYMBOL_GLOBAL:
-                    symbol_kind = "global";
-                    break;
-                case SYMBOL_PARAM:
-                    symbol_kind = "param";
-                    break;
-            }
             if (PrintResolutions) {
-                printf("%s resolves to %s %d\n", name, symbol_kind, sym->which);
+                switch (sym->kind) {
+                    case SYMBOL_LOCAL:
+                        printf("local %s resolves to local %d\n", name, sym->which);
+                        break;
+                    case SYMBOL_GLOBAL:
+                        printf("global %s resolves to global %s\n", name, name);
+                        break;
+                    case SYMBOL_PARAM:
+                        printf("param %s resolves to param %d\n", name, sym->which);
+                        break;
+                }
             }
             return sym;
         }

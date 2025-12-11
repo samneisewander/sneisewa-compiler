@@ -2,6 +2,6 @@
 main: function void(x: integer) = {
     i: integer;
     if (true) {
-        print x;
+        print x, i;
     }
 }

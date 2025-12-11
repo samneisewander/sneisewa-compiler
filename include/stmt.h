@@ -41,8 +41,9 @@ void stmt_print(struct stmt* s, int indent);
 
 /**
  * Calls the appropriate resolve on each of its sub-components. In the case of a STMT BLOCK, it also enters and leaves a new scope.
+ * @param prototype The symbol structure of the function this statement appears inside of.
  */
-void stmt_resolve(struct stmt* s);
+void stmt_resolve(struct stmt* s, struct symbol* prototype);
 
 /**
  * Evaluates each of a statement's components, and then verifies that types match where needed.
@@ -50,5 +51,10 @@ void stmt_resolve(struct stmt* s);
  * @param prototype The symbol structure of the function this statement appears inside of.
  */
 void stmt_typecheck(struct stmt* s, struct symbol* prototype);
+
+/**
+ * Creates code for control flow statements.
+ */
+void stmt_codegen(struct stmt* s, struct symbol* prototype, FILE* outfile);
 
 #endif

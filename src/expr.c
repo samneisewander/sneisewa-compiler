@@ -10,7 +10,10 @@
 
 #include "encoder.h"
 #include "error.h"
+#include "label.h"
 #include "scope.h"
+#include "scratch.h"
+#include "symbol.h"
 
 /**
  * - Cannot print main
@@ -18,6 +21,8 @@
  * - Cannot print auto
  * -
  */
+
+const char* arg_reg_map[6] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 
 struct expr* expr_create(expr_t kind, struct expr* left, struct expr* right) {
     struct expr* e = calloc(1, sizeof(*e));
@@ -700,7 +705,7 @@ struct type* expr_typecheck(struct expr* e) {
             arg = e->right;
 
             while (param && arg) {
-                arg_t = expr_typecheck(arg);
+                arg_t = expr_typecheck(arg->left);
                 if (!type_equals(arg_t, param->type)) {
                     fprintf(stderr, "typecheck error: argument ");
                     expr_print(arg, stderr);
@@ -800,4 +805,467 @@ struct type* expr_typecheck(struct expr* e) {
     type_delete(rt);
 
     return result;
+}
+
+void expr_codegen(struct expr* e, FILE* outfile) {
+    if (!e) return;
+    char encoded_string[256] = {0};
+    const char* label = NULL;
+    struct type* type;
+    struct expr* arg;
+    int reg, reg2, label1, label2;
+    int arg_count = 0;
+
+    switch (e->kind) {
+        // Interior node: generate children, then add them.
+        case EXPR_ASSIGNMENT:
+            expr_codegen(e->right, outfile);
+            // Handle special case where subscript should return address at offset from memory
+            if (e->left->kind == EXPR_SUBSCRIPT) {
+                // 1. Evaluate indexing expression
+                reg = scratch_alloc();
+                expr_codegen(e->left->right, outfile);
+
+                // 2. Perform bounds checking if necessary
+                if (e->left->left->symbol->type->kind == TYPE_ARRAY) {
+                    // 2a. Load first element of array (the size) into a register
+                    reg2 = scratch_alloc();
+                    fprintf(outfile, "MOVQ (%s), %s\n", symbol_codegen(e->left->left->symbol), scratch_name(reg2));
+
+                    // 2b. Check if index is greater than array size or less than zero
+                    label1 = label_create();
+                    label2 = label_create();
+                    /**
+                     * CAREFUL: The CMPQ instruction is tricky!
+                     * CMPQ %rax, %rbx
+                     * JG               # Taken if %rbx > %rax
+                     */
+                    fprintf(outfile, "CMPQ %s, %s\n", scratch_name(reg2), scratch_name(e->left->right->reg));
+                    fprintf(outfile, "JGE %s\n", label_name(label1));
+                    fprintf(outfile, "XOR %s, %s\n", scratch_name(reg2), scratch_name(reg2));
+                    fprintf(outfile, "CMPQ %s, %s\n", scratch_name(reg2), scratch_name(e->left->right->reg));
+                    fprintf(outfile, "JL %s\n", label_name(label1));
+                    scratch_free(reg2);
+                    fprintf(outfile, "JMP %s\n", label_name(label2));
+                    // 2c. Call exit(EXIT_FAILURE)
+                    fprintf(outfile, "%s:\n", label_name(label1));
+                    fprintf(outfile, "MOVQ $1, %%rdi\n");
+                    fprintf(outfile, "MOVQ $60, %%rax\n");
+                    fprintf(outfile, "SYSCALL\n");
+                    // 2d. Otherwise, add 1 to index to skip over array size
+                    fprintf(outfile, "%s:\n", label_name(label2));
+                    fprintf(outfile, "ADDQ $1, %s\n", scratch_name(e->left->right->reg));
+                }
+
+                // 3. Load the address of the first array element
+                fprintf(outfile, "LEAQ %s, %s\n", symbol_codegen(e->left->left->symbol), scratch_name(reg));
+
+                // 4. Write the new value.
+                fprintf(outfile, "MOVQ %s, (%s, %s, 8)\n",
+                        scratch_name(e->right->reg),         // Source
+                        scratch_name(reg),                   // Destination base
+                        scratch_name(e->left->right->reg));  // Destination offset
+
+                // 5. Free registers.
+                scratch_free(e->left->right->reg);
+                scratch_free(reg);
+            } else {
+                fprintf(outfile, "MOVQ %s, %s\n", scratch_name(e->right->reg), symbol_codegen(e->left->symbol));
+                e->reg = e->right->reg;
+            }
+            break;
+        case EXPR_LOGICAL_OR:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+
+            fprintf(outfile, "CMPQ $1, %s\n", scratch_name(e->left->reg));
+            fprintf(outfile, "JE %s\n", label_name(label1));
+            fprintf(outfile, "CMPQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+
+            fprintf(outfile, "%s:\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+
+            fprintf(outfile, "%s:\n", label_name(label2));
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+
+            break;
+        case EXPR_LOGICAL_AND:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+
+            fprintf(outfile, "CMPQ $0, %s\n", scratch_name(e->left->reg));
+            fprintf(outfile, "JE %s\n", label_name(label1));
+            fprintf(outfile, "CMPQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+
+            fprintf(outfile, "%s:\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+
+            fprintf(outfile, "%s:\n", label_name(label2));
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+
+            break;
+        case EXPR_LESS_THAN:
+            /**
+             * CAREFUL: The CMPQ instruction is tricky!
+             * CMPQ %rax, %rbx
+             * JG               # Taken if %rbx > %rax
+             */
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+
+            fprintf(outfile, "CMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+            fprintf(outfile, "JLE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+            fprintf(outfile, "%s:\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "%s:\n", label_name(label2));
+
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_LESS_THAN_OR_EQUAL:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+
+            fprintf(outfile, "CMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+            fprintf(outfile, "JLE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+            fprintf(outfile, "%s:\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "%s:\n", label_name(label2));
+
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_EQUAL:
+            // Not going to support equality between strings or arrays.
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+            type = expr_typecheck(e->left);
+
+            // Guard stuff not implemented
+            switch (type->kind) {
+                case TYPE_ARRAY:
+                case TYPE_CARRAY:
+                case TYPE_STRING:
+                    fprintf(stderr, "codegen: comparison between %ss not implemented\n", ttos(type));
+                default:
+                    break;
+            }
+
+            fprintf(outfile, "CMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+            fprintf(outfile, "JE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+            fprintf(outfile, "%s:\n", label_name(label1));  // Equal label
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "%s:\n", label_name(label2));  // done_label
+
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+
+            break;
+        case EXPR_GREATER_THAN:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+
+            fprintf(outfile, "CMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+            fprintf(outfile, "JG %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+            fprintf(outfile, "%s:\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "%s:\n", label_name(label2));
+
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_GREATER_THAN_OR_EQUAL:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+
+            fprintf(outfile, "CMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+            fprintf(outfile, "JGE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+            fprintf(outfile, "%s:\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "%s:\n", label_name(label2));
+
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_NOT_EQUAL:
+            // Not going to support equality between strings or arrays.
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            label1 = label_create();
+            label2 = label_create();
+            type = expr_typecheck(e->left);
+
+            // Guard stuff not implemented
+            switch (type->kind) {
+                case TYPE_ARRAY:
+                case TYPE_CARRAY:
+                case TYPE_STRING:
+                    fprintf(stderr, "codegen: comparison between %ss not implemented\n", ttos(type));
+                default:
+                    break;
+            }
+
+            fprintf(outfile, "CMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+            fprintf(outfile, "JE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+            fprintf(outfile, "%s:\n", label_name(label1));  // Equal label
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "%s:\n", label_name(label2));  // done_label
+
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_ADD:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            fprintf(outfile, "ADDQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_SUBTRACT:
+            /**
+             * CAREFUL: The SUBQ instruction is tricky!
+             * SUBQ %rax, %rbx # rbx <= rbx - rax
+             */
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            fprintf(outfile, "SUBQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+            e->reg = e->left->reg;
+            scratch_free(e->right->reg);
+            break;
+        case EXPR_MULTIPLY:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            fprintf(outfile, "MOVQ %s, %%rax\n", scratch_name(e->left->reg));
+            fprintf(outfile, "IMULQ %s\n", scratch_name(e->right->reg));
+            fprintf(outfile, "MOVQ %%rax, %s\n", scratch_name(e->right->reg));
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_DIVIDE:
+        case EXPR_REMAINDER:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+            fprintf(outfile, "MOVQ %s, %%rax\n", scratch_name(e->left->reg));
+            fprintf(outfile, "CQO\n");
+            fprintf(outfile, "IDIVQ %s\n", scratch_name(e->right->reg));
+            if (e->kind == EXPR_DIVIDE) {
+                fprintf(outfile, "MOVQ %%rax, %s\n", scratch_name(e->right->reg));
+            } else {
+                fprintf(outfile, "MOVQ %%rdx, %s\n", scratch_name(e->right->reg));
+            }
+            e->reg = e->right->reg;
+            scratch_free(e->left->reg);
+            break;
+        case EXPR_EXPONENT:
+            expr_codegen(e->left, outfile);
+            expr_codegen(e->right, outfile);
+
+            // Library function call
+            fprintf(outfile, "PUSH %%rdi\n");
+            fprintf(outfile, "PUSH %%rsi\n");
+            fprintf(outfile, "PUSH %%rdx\n");
+            fprintf(outfile, "PUSH %%rcx\n");
+            fprintf(outfile, "PUSH %%r8\n");
+            fprintf(outfile, "PUSH %%r9\n");
+
+            // Write arguments into argument registers
+            fprintf(outfile, "MOVQ %s, %%rdi\n", scratch_name(e->left->reg));
+            fprintf(outfile, "MOVQ %s, %%rsi\n", scratch_name(e->right->reg));
+
+            // Peform function call
+            fprintf(outfile, "CALL integer_power\n");
+            // Restore old argument registers
+            fprintf(outfile, "POP %%r9\n");
+            fprintf(outfile, "POP %%r8\n");
+            fprintf(outfile, "POP %%rcx\n");
+            fprintf(outfile, "POP %%rdx\n");
+            fprintf(outfile, "POP %%rsi\n");
+            fprintf(outfile, "POP %%rdi\n");
+
+            fprintf(outfile, "MOVQ %%rax, %s\n", scratch_name(e->right->reg));
+            scratch_free(e->left->reg);
+            e->reg = e->right->reg;
+            break;
+        case EXPR_UNARY_NEGATION:
+            expr_codegen(e->left, outfile);
+            fprintf(outfile, "NEGQ %s\n", scratch_name(e->left->reg));
+            e->reg = e->left->reg;
+            break;
+        case EXPR_LOGICAL_NOT:
+            expr_codegen(e->left, outfile);
+            label1 = label_create();
+            label2 = label_create();
+
+            fprintf(outfile, "CMPQ $1, %s\n", scratch_name(e->left->reg));
+            fprintf(outfile, "JE %s\n", label_name(label1));
+            fprintf(outfile, "MOVQ $1, %s\n", scratch_name(e->left->reg));
+            fprintf(outfile, "JMP %s\n", label_name(label2));
+
+            fprintf(outfile, "%s:\n", label_name(label1));
+            fprintf(outfile, "MOVQ $0, %s\n", scratch_name(e->left->reg));
+
+            fprintf(outfile, "%s:\n", label_name(label2));
+            e->reg = e->left->reg;
+
+            break;
+        case EXPR_UNARY_ARRAY_LENGTH:
+            expr_codegen(e->left, outfile);
+            fprintf(outfile, "MOVQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->left->reg));
+            e->reg = e->left->reg;
+            break;
+        case EXPR_POSTFIX_INCREMENT:
+            expr_codegen(e->left, outfile);
+            fprintf(outfile, "INCQ %s\n", scratch_name(e->left->reg));
+            e->reg = e->left->reg;
+            break;
+        case EXPR_POSTFIX_DECREMENT:
+            expr_codegen(e->left, outfile);
+            fprintf(outfile, "DECQ %s\n", scratch_name(e->left->reg));
+            e->reg = e->left->reg;
+            break;
+        case EXPR_SUBSCRIPT:
+            expr_codegen(e->right, outfile);
+
+            if (e->left->symbol->type->kind == TYPE_ARRAY) {
+                // 2a. Load first element of array (the size) into a register
+                reg2 = scratch_alloc();
+                fprintf(outfile, "MOVQ (%s), %s\n", symbol_codegen(e->left->symbol), scratch_name(reg2));
+
+                // 2b. Check if index is greater than array size or less than zero
+                label1 = label_create();
+                label2 = label_create();
+                /**
+                 * CAREFUL: The CMPQ instruction is tricky!
+                 * CMPQ %rax, %rbx
+                 * JG               # Taken if %rbx > %rax
+                 */
+                fprintf(outfile, "CMPQ %s, %s\n", scratch_name(reg2), scratch_name(e->right->reg));
+                fprintf(outfile, "JGE %s\n", label_name(label1));
+                fprintf(outfile, "XOR %s, %s\n", scratch_name(reg2), scratch_name(reg2));
+                fprintf(outfile, "CMPQ %s, %s\n", scratch_name(reg2), scratch_name(e->right->reg));
+                fprintf(outfile, "JL %s\n", label_name(label1));
+                scratch_free(reg2);
+                fprintf(outfile, "JMP %s\n", label_name(label2));
+                // 2c. Call exit(EXIT_FAILURE)
+                fprintf(outfile, "%s:\n", label_name(label1));
+                fprintf(outfile, "MOVQ $1, %%rdi\n");
+                fprintf(outfile, "MOVQ $60, %%rax\n");
+                fprintf(outfile, "SYSCALL\n");
+                // 2d. Otherwise, add 1 to index to skip over array size
+                fprintf(outfile, "%s:\n", label_name(label2));
+                fprintf(outfile, "ADDQ $1, %s\n", scratch_name(e->right->reg));
+            }
+
+            reg = scratch_alloc();
+            fprintf(outfile, "LEAQ %s, %s\n", symbol_codegen(e->left->symbol), scratch_name(reg));
+            fprintf(outfile, "MOVQ (%s, %s, 8), %s\n", scratch_name(reg), scratch_name(e->right->reg), scratch_name(e->right->reg));
+            e->reg = e->right->reg;
+            scratch_free(reg);
+            break;
+        case EXPR_CALL:
+            // Save old argument registers (%rdi, %rsi, %rdx, %rcx, %r8, and %r9, in that order.)
+            // Henry saved and restored the argument registers in the prologue and epilogue... I think this is functionally equivalent but will revisit if there are problems.
+            fprintf(outfile, "PUSH %%rdi\n");
+            fprintf(outfile, "PUSH %%rsi\n");
+            fprintf(outfile, "PUSH %%rdx\n");
+            fprintf(outfile, "PUSH %%rcx\n");
+            fprintf(outfile, "PUSH %%r8\n");
+            fprintf(outfile, "PUSH %%r9\n");
+
+            // Write arguments into argument registers, exit if there are more than 6
+            arg = e->right;
+            while (arg) {
+                if (arg_count > 5) {
+                    fprintf(stderr, "codegen: function calls with more than 6 arguments not supported.\n");
+                    exit(EXIT_FAILURE);
+                }
+                expr_codegen(arg->left, outfile);
+                fprintf(outfile, "MOVQ %s, %s\n", scratch_name(arg->left->reg), arg_reg_map[arg_count]);
+                scratch_free(arg->left->reg);
+                arg = arg->right;
+                arg_count++;
+            }
+
+            // Peform function call
+            fprintf(outfile, "CALL %s\n", e->left->name);
+            reg = scratch_alloc();
+            fprintf(outfile, "MOVQ %%rax, %s\n", scratch_name(reg));
+
+            // Restore old argument registers
+            fprintf(outfile, "POP %%r9\n");
+            fprintf(outfile, "POP %%r8\n");
+            fprintf(outfile, "POP %%rcx\n");
+            fprintf(outfile, "POP %%rdx\n");
+            fprintf(outfile, "POP %%rsi\n");
+            fprintf(outfile, "POP %%rdi\n");
+
+            break;
+        case EXPR_NAME:
+            // What if the name is to an array or string type? Then we probably want to use LEAQ on the output of symbol_codegen, not just move the value at that address (which would give us the first character or array element instead of a pointer to the whole structure).
+            e->reg = scratch_alloc();
+            fprintf(outfile, "MOVQ %s, %s\n", symbol_codegen(e->symbol), scratch_name(e->reg));
+            break;
+        case EXPR_INT:
+            e->reg = scratch_alloc();
+            fprintf(outfile, "MOVQ $%ld, %s\n", e->int_literal, scratch_name(e->reg));
+            break;
+        case EXPR_DOUBLE:
+            fprintf(stderr, "codegen: floating point not supported.\n");
+            exit(EXIT_FAILURE);
+            break;
+        case EXPR_BOOLEAN:
+            e->reg = scratch_alloc();
+            fprintf(outfile, "MOVQ $%ld, %s\n", e->bool_literal ? 1L : 0L, scratch_name(e->reg));
+            break;
+        case EXPR_CHAR:
+            e->reg = scratch_alloc();
+            char_encode(e->char_literal, encoded_string);
+            fprintf(outfile, "MOVQ $%s, %s\n", encoded_string, scratch_name(e->reg));
+            break;
+        case EXPR_STRING:
+            e->reg = scratch_alloc();
+            label = label_name(label_create());
+
+            string_encode(e->string_literal, encoded_string);
+            fprintf(outfile, ".data\n");
+            fprintf(outfile, "%s: .string %s\n", label, encoded_string);
+            fprintf(outfile, ".text\n");
+            fprintf(outfile, "LEAQ %s, %s\n", label, scratch_name(e->reg));
+            break;
+        default:
+            break;
+    }
 }

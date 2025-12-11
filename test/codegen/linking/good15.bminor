@@ -1,0 +1,7 @@
+// Negation
+
+main: function integer() = {
+    x: integer = 1;
+
+    return (-x) + 1;
+}

@@ -1,0 +1,4 @@
+// Global String
+
+x: string = "Hello World!\n";
+y: string;

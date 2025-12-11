@@ -1,0 +1,23 @@
+// COMPARISON
+
+main: function integer() = {
+    x: boolean = true;
+    y: boolean = false;
+
+    a: integer = 3;
+    b: integer = 5;
+
+    print a < 5, '\n';
+    print a > 5, '\n';
+
+    a = a + 2;
+    print a >= 5, '\n';
+    print a <= 5, '\n';
+
+    print "Expecting true: ", x || y, '\n';
+    print "Expecting false: ", x && y, '\n';
+
+    print x == y, ' ', x != y, '\n';
+
+    return 0; 
+}

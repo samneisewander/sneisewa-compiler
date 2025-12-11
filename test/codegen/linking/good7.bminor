@@ -1,0 +1,17 @@
+// Local variable assingment
+
+main: function integer() = {
+    x: integer;
+    y: boolean;
+    z: char;
+    s: string;
+
+    x = 5;
+    y = false;
+    z = '\n';
+    s = "hello world\n";
+
+    print x, ", ", y, ", ", s, z; 
+
+    return y;
+}

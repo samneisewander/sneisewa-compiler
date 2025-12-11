@@ -19,4 +19,14 @@ bool string_decode(const char* es, char* s);
  */
 void string_encode(const char* s, char* es);
 
+/**
+ * Takes an input character, which may be a control character, and returns a string containing the encoded representation of the character wrapped in single quotes, the way it might appear in a bminor program. The return string may include backtick escape codes like "\\n" or "\t".
+ *
+ * Examples: Newline => "'\\n'", h => 'h'
+ *
+ * @param c character to encode
+ * @param es Buffer to write encoded character to.
+ */
+void char_encode(char c, char* es);
+
 #endif

@@ -1,0 +1,10 @@
+// SUB
+
+main: function integer() = {
+    x: integer = 5;
+    y: integer = 5;
+
+    print x - y;
+
+    return x - y;
+}

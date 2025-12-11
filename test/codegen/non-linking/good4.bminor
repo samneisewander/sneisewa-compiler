@@ -1,0 +1,12 @@
+// global c Array
+
+a: carray [5] boolean = {true, false, true, false, true};
+b: carray [5] integer = {1, 2, 3, 4, 5};
+c: carray [5] char = {'\n', '\r', 'a', '4', '5'};
+d: carray [5] string = {"hi\n", "my\n", "nam\n", "is\n", "sam\n"};
+
+// uninitialized c array
+i: carray [5] boolean;
+j: carray [5] integer;
+k: carray [5] char;
+l: carray [5] string;

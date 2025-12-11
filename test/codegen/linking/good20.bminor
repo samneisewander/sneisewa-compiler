@@ -1,0 +1,16 @@
+// C array subscript
+printf: function void(x: string);
+
+square: function integer(x: integer) = {
+    return x * x;
+}
+
+main: function integer() = {
+    printf("Hello world\n");
+
+    x: integer = 5;
+
+    print square(square(x)), '\n';
+
+    return 0;
+}

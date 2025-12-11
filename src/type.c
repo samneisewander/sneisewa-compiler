@@ -152,13 +152,7 @@ void type_delete(struct type* t) {
 
     type_delete(t->subtype);
     if (t->params) {
-        struct param_list* params_curr = t->params;
-        struct param_list* params_next = params_curr->next;
-        while (params_next) {
-            param_list_delete(params_curr);
-            params_curr = params_next;
-            params_next = params_next->next;
-        }
+        param_list_delete(t->params);
     }
     expr_delete(t->array_size);
     free(t);

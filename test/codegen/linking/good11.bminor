@@ -1,0 +1,10 @@
+// DIV
+
+main: function integer() = {
+    x: integer = 5;
+    y: integer = 2;
+
+    print x / y, '\n';
+
+    return y / x;
+}
